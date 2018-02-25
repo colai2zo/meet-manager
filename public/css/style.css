@@ -1,0 +1,9 @@
+.login-form{
+	width: 340px;
+	margin: 50px auto;
+}
+.login-form form{
+	background-color: lightgray;
+	padding: 30px;
+	border-radius: 25px
+}

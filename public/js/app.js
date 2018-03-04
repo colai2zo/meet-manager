@@ -1,11 +1,10 @@
 var createUser = document.getElementById('register-form');
 createUser.addEventListener('submit', function(){
-	const name = createUser.querySelector('#name').value;
 	const username = createUser.querySelector('#username').value;
 	const password = createUser.querySelector('#password').value;
 	const passwordConfirm = createUser.querySelector('#password-confirm').value;
 	if(password === passwordConfirm){
-		post('/createUser', {name, username, password});
+		post('/createUser', {username, password});
 	}else{
 		window.alert('Please try again. Your passwords must match.');
 		createUser.clear();

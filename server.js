@@ -21,7 +21,7 @@ http.listen(process.env.PORT || 8080, function(){
 
 app.post('/createUser', function(req,res){
 	const username = req.body.username;
-	const password = req.body.passname;
+	const password = req.body.password;
 	console.log('Add user ' +  username + ' with password ' + password);
 	store.createUser({
       username: req.body.username,
@@ -29,6 +29,18 @@ app.post('/createUser', function(req,res){
     }).then(function(){
     	res.sendStatus(200)
     });
-})
+});
+
+app.post('/login', (req, res) => {
+  store
+    .authenticate({
+      username: req.body.username,
+      password: req.body.password
+    })
+    .then(({ success }) => {
+      if (success) res.sendStatus(200)
+      else res.sendStatus(401)
+    })
+});
 
 

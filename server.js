@@ -88,6 +88,13 @@ app.post('/create-meet', (req, res) => {
 	res.sendFile(__dirname + "/html/main-menu.html");
 });
 
+// app.get('/register-runners', (req,res) =>{
+// 	const runners = req.body.runners;
+// 	for(i = 0 ; i < runners.length ; i++){
+		
+// 	}
+// });
+
 app.get('/get-all-meets', (req,res) =>{
 	const sql = "SELECT * FROM meets;";
 	con.query(sql, (err,result) => {

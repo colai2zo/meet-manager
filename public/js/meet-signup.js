@@ -1,7 +1,7 @@
 $(document).ready(function(){
 	$.ajax({url: "/get-all-events-for-meet?meetId=" + get("meetId") , method: "GET" ,
 		
-		success: function(result){
+		success: (result) => {
 			var meetDiv = $('#events-div');
 			console.log(result);
 			var events = JSON.parse(result.toString());
@@ -11,7 +11,7 @@ $(document).ready(function(){
 				var card = $("<div class='card'></div>");
 				var body = $("<div class='card-body'></div>");
 				var table = $("<table id='" + events[i].event_id + "'><tr><th>Name</th><th>Grade</th><th colspan='3'>Seed Time</th></tr></table>");
-				button.click(function(){
+				button.click(() => {
 					const row = $("<tr>"+ 
 					"<td><input type='text' id='runner_name'/></td>"+
 					"<td><input type='text' id='runner_grade'/></td>"+
@@ -34,7 +34,11 @@ $(document).ready(function(){
 		if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
 	      return decodeURIComponent(name[1]);
 	}
-});
-function addRunner(event_id){
-	
-}
+	$('signup-form').submit((e) => {
+		e.preventDefault();
+		var events = $('.table');
+		for(i = 0 ; i < events.length ; i++){
+
+		}
+	});
+});	

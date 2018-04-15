@@ -58,17 +58,37 @@ app.post('/login', (req, res) => {
 });
 
 app.post('/create-meet', (req, res) => {
-	const id = createMeetId();
+	const meetId = createMeetId();
 	const name  = req.body.name;
 	const date = req.body.date;
 	const location = req.body.location;
 	const type = req.body.type;
 	const events = req.body.events;
-	const sql = "INSERT INTO meets (meet_id, meet_name, meet_date, meet_location, meet_type) VALUES ('" + id + "','" + 
+	var sql = "INSERT INTO meets (meet_id, meet_name, meet_date, meet_location, meet_type) VALUES ('" + meetId + "','" + 
 	name + "','" + date + "','" + location + "','" + type + "');";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
 		console.log("1 record inserted, ID: " + result.insertId);
+	});
+	for(i = 0 ; i < events.length ; i++){
+		console.log(events[i] + "  :  " + i);
+		const eventId = createEventId();
+		const eventName = events[i].event;
+		const gender = events[i].gender;
+		sql = "INSERT INTO events (event_id, meet_id, event_name, gender) VALUES ('" + eventId + "','" + meetId + "','" + eventName + "','" + gender + "');";
+		con.query(sql, (err,result) => {
+			if(err) throw err;
+			console.log("1 record inserted, ID: " + result.insertId);
+		});
+	}
+	res.sendFile(__dirname + "/html/main-menu.html");
+});
+
+app.get('/get-all-meets', (req,res) =>{
+	const sql = "SELECT * FROM meets;";
+	con.query(sql, (err,result) => {
+		if(err) throw err;
+		res.send(JSON.stringify(result));
 	});
 });
 
@@ -87,24 +107,50 @@ function authenticate ({ username, password }) {
   }
 
 function createMeetId(){
-	var sql = "SELECT meet_id FROM meets;"
-	var existingMeets = [];
-	con.query(sql, (err,result) =>{
-		if(err) throw err;
-		existingMeets = result;
-	});
-	var isTaken = false;
-	var meetId = "";
-	do{
-		meetId = randomString();
-		for(i = 0 ; i < existingMeets.length ; i++){
-			if(existingMeets[i].meet_id === meetId){
-				isTaken = true;
-			}
-		}
-	}while(isTaken);
-	return meetId;
+	return randomString();
+	// var sql = "SELECT meet_id FROM meets;";
+	// var existingMeets = [];
+	// var meetId = "";
+	// con.query(sql, (err,result) =>{
+	// 	if(err) throw err;
+	// 	console.log(result);
+	// 	var isTaken = false;
+	// 	do{
+	// 		meetId = randomString();
+	// 		for(i = 0 ; i < result.length ; i++){
+	// 			console.log(result[i].meet_id + " : " + meetId);
+	// 			if(result[i].meet_id === meetId){
+	// 				isTaken = true;
+	// 			}
+	// 		}
+	// 	}while(isTaken);
+	// });
+	// return meetId;
 }
+
+function createEventId(){
+	return randomString();
+	// var sql = "SELECT event_id FROM events;";
+	// var existingEvents = [];
+	// con.query(sql, (err,result) =>{
+	// 	if(err) throw err;
+	// 	existingEvents = result;
+	// });
+	// console.log(existingEvents);
+	// var isTaken = false;
+	// var eventId = "";
+	// do{
+	// 	eventId = randomString();
+	// 	for(i = 0 ; i < existingEvents.length ; i++){
+	// 		console.log(existingEvents[i].event_id + " : " + eventId);
+	// 		if(existingEvents[i].event_id === eventId){
+	// 			isTaken = true;
+	// 		}
+	// 	}
+	// }while(isTaken);
+	// return eventId;
+}
+
 
 function saltHashPassword ({
   password,

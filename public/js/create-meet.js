@@ -36,27 +36,29 @@ subtractEventButton.addEventListener('click', function(){
 	
 
 function addEventRow(){
-	document.querySelector("#submit-new-meet").disabled = false;
-	const eventTable = document.querySelector("#event-table");
-	const row = document.createElement('tr');
-	//Add Event and Gender Selectors to New Row
-	const eventEntry = document.createElement('td');
-	const eventSelector = document.createElement('select');
-	const genderEntry = document.createElement('td');
-	const genderSelector = document.createElement('select');
-	const meetType = document.querySelector('#meet-type').value.substring(0,5);
-	addChoicesTo(eventSelector,['55m','60m','100m','200m','300m','400m','500m','600m','800m','1000m','1500m','1600m','3000m']);
-	addChoicesTo(genderSelector,['Male','Female']);
-	genderEntry.appendChild(genderSelector);
-	eventEntry.appendChild(eventSelector);
-	row.appendChild(eventEntry);
-	row.appendChild(genderEntry);
-	eventTable.appendChild(row);
+	if(eventTable.rows.length < 27){
+		document.querySelector("#submit-new-meet").disabled = false;
+		const eventTable = document.querySelector("#event-table");
+		const row = document.createElement('tr');
+		//Add Event and Gender Selectors to New Row
+		const eventEntry = document.createElement('td');
+		const eventSelector = document.createElement('select');
+		const genderEntry = document.createElement('td');
+		const genderSelector = document.createElement('select');
+		const meetType = document.querySelector('#meet-type').value.substring(0,5);
+		addChoicesTo(eventSelector,['55m','60m','100m','200m','300m','400m','500m','600m','800m','1000m','1500m','1600m','3000m']);
+		addChoicesTo(genderSelector,['Male','Female']);
+		genderEntry.appendChild(genderSelector);
+		eventEntry.appendChild(eventSelector);
+		row.appendChild(eventEntry);
+		row.appendChild(genderEntry);
+		eventTable.appendChild(row);
+	}
 }
 function deleteEventRow(){
-	var rows = document.querySelector("#event-table").rows;
+	var rows = eventTable.rows;
 	console.log(rows.length);
-	if(rows.length > 2 && rows.length < 27){
+	if(rows.length > 2){
 		rows[rows.length-1].remove();
 	}
 }

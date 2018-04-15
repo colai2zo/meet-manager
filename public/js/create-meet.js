@@ -8,12 +8,17 @@ createMeet.addEventListener('submit', function(e){
 		const meetName = document.querySelector('#meet-name').value;
 		const meetDate = document.querySelector('#meet-date').value;
 		const meetLocation = document.querySelector('#meet-location').value;
-		const meetLocation = document.querySelector('#meet-type').value;
-		const events = [];
+		const meetType = document.querySelector('#meet-type').value;
+		const meetEvents = [];
 		for(i = 1 ; i < eventTable.rows.length ; i++){
-			events.push(getEventAtRow(i));
+			meetEvents.push(getEventAtRow(i));
 		}
-		console.log(events);
+		post('/create-meet' , 
+			{name : meetName,
+			 date : meetDate,
+			 location : meetLocation,
+			 type : meetType,
+			 events : meetEvents});
 	}
 });
 

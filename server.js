@@ -58,7 +58,18 @@ app.post('/login', (req, res) => {
 });
 
 app.post('/create-meet', (req, res) => {
-	createMeetId();
+	const id = createMeetId();
+	const name  = req.body.name;
+	const date = req.body.date;
+	const location = req.body.location;
+	const type = req.body.type;
+	const events = req.body.events;
+	const sql = "INSERT INTO meets (meet_id, meet_name, meet_date, meet_location, meet_type) VALUES ('" + id + "','" + 
+	name + "','" + date + "','" + location + "','" + type + "');";
+	con.query(sql, (err,result) => {
+		if(err) throw err;
+		console.log("1 record inserted, ID: " + result.insertId);
+	});
 });
 
 
@@ -77,10 +88,22 @@ function authenticate ({ username, password }) {
 
 function createMeetId(){
 	var sql = "SELECT meet_id FROM meets;"
+	var existingMeets = [];
 	con.query(sql, (err,result) =>{
 		if(err) throw err;
-		console.log(result);
+		existingMeets = result;
 	});
+	var isTaken = false;
+	var meetId = "";
+	do{
+		meetId = randomString();
+		for(i = 0 ; i < existingMeets.length ; i++){
+			if(existingMeets[i].meet_id === meetId){
+				isTaken = true;
+			}
+		}
+	}while(isTaken);
+	return meetId;
 }
 
 function saltHashPassword ({

@@ -7,3 +7,18 @@
 	padding: 30px;
 	border-radius: 25px
 }
+.header{
+	color: black;
+}
+.header:hover{
+	color: black;
+}
+#add-event-button{
+	padding-top: 5px
+	background-color: #4BD606;
+	border-color: black;
+}
+#subtract-event-button{
+	background-color: #D62906;
+	border-color: black;
+}

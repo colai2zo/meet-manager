@@ -3,7 +3,9 @@ const app = express();
 const bodyParser = require("body-parser");
 const path = require("path");
 const http = require('http').Server(app);
-const store = require('./store')
+const mysql = require('mysql');
+const crypto = require('crypto');
+const knex = require('knex')(require('./knexfile'));
 
 // Set up publicly accesible files
 app.use(bodyParser.urlencoded({extended: false}));
@@ -14,33 +16,85 @@ app.get("/", function(req,res){
 	res.sendFile(__dirname + "/html/index.html");
 });
 
+//Connect to db
+var con = mysql.createConnection({
+	host: "localhost",
+	user: "root",
+	password: "1234",
+	database: "meet_manager"
+});
+
+con.connect((err) => {
+  if (err) throw err;
+  console.log("Connected!");
+});
+
 //Listen on port 8080
 http.listen(process.env.PORT || 8080, function(){
 	console.log('listening on ' + (process.env.PORT || 8080));
 });
 
-app.post('/createUser', function(req,res){
+app.post('/createUser', (req,res) =>{
 	const username = req.body.username;
 	const password = req.body.password;
 	console.log('Add user ' +  username + ' with password ' + password);
-	store.createUser({
-      username: req.body.username,
-      password: req.body.password
-    }).then(function(){
-    	res.sendStatus(200)
+	const { salt, hash } = saltHashPassword({ password });
+    var sql = "INSERT INTO user (username, encrypted_password, salt) VALUES ('" + username + "','" + hash + "','" + salt + "')";
+    con.query(sql, function(err,result){
+    	if(err) throw err;
+    	console.log("1 record inserted, ID: " + result.insertId);
     });
 });
 
 app.post('/login', (req, res) => {
-  store
-    .authenticate({
+	authenticate({
       username: req.body.username,
       password: req.body.password
     })
     .then(({ success }) => {
-      if (success) res.sendStatus(200)
+      if (success) res.sendStatus(200); 
       else res.sendStatus(401)
     })
 });
 
+app.post('/create-meet', (req, res) => {
+	createMeetId();
+});
 
+
+function authenticate ({ username, password }) {
+    console.log(`Authenticating user ${username}`)
+    return knex('user').where({ username })
+      .then(([user]) => {
+        if (!user) return { success: false }
+        const { hash } = saltHashPassword({
+          password,
+          salt: user.salt
+        })
+        return { success: hash === user.encrypted_password }
+      })
+  }
+
+function createMeetId(){
+	var sql = "SELECT meet_id FROM meets;"
+	con.query(sql, (err,result) =>{
+		if(err) throw err;
+		console.log(result);
+	});
+}
+
+function saltHashPassword ({
+  password,
+  salt = randomString()
+}) {
+  const hash = crypto
+    .createHmac('sha512', salt)
+    .update(password)
+  return {
+    salt,
+    hash: hash.digest('hex')
+  }
+}
+function randomString () {
+  return crypto.randomBytes(4).toString('hex')
+}

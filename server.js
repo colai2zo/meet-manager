@@ -16,6 +16,10 @@ app.get("/", function(req,res){
 	res.sendFile(__dirname + "/html/index.html");
 });
 
+app.get("/display-meets", function(req,res){
+	res.sendFile(__dirname + "/html/display-meets.html");
+});
+
 //Connect to db
 var con = mysql.createConnection({
 	host: "localhost",
@@ -75,7 +79,7 @@ app.post('/create-meet', (req, res) => {
 		const eventId = createEventId();
 		const eventName = events[i].event;
 		const gender = events[i].gender;
-		sql = "INSERT INTO events (event_id, meet_id, event_name, gender) VALUES ('" + eventId + "','" + meetId + "','" + eventName + "','" + gender + "');";
+		sql = "INSERT INTO events (event_id, meet_id, event_name, event_gender) VALUES ('" + eventId + "','" + meetId + "','" + eventName + "','" + gender + "');";
 		con.query(sql, (err,result) => {
 			if(err) throw err;
 			console.log("1 record inserted, ID: " + result.insertId);
@@ -88,6 +92,17 @@ app.get('/get-all-meets', (req,res) =>{
 	const sql = "SELECT * FROM meets;";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
+		res.send(JSON.stringify(result));
+	});
+});
+
+app.get('/get-all-events-for-meet', (req,res) =>{
+	const meetId = req.query.meetId;
+	console.log(meetId);
+	const sql = "SELECT event_id, event_name, event_gender FROM events WHERE meet_id='" + meetId + "';";
+	con.query(sql, (err,result) => {
+		if(err) throw err;
+		console.log(result);
 		res.send(JSON.stringify(result));
 	});
 });

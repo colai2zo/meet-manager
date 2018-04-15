@@ -7,7 +7,7 @@ if(loginUser){
 			if (status === 200){
 				window.location = "/html/main-menu.html"
 			} else{
-				alert('login failed');
+				alert('Login failed. Please try again.');
 			} 
 	    });
 	});

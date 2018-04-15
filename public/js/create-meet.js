@@ -18,7 +18,16 @@ createMeet.addEventListener('submit', function(e){
 			 date : meetDate,
 			 location : meetLocation,
 			 type : meetType,
-			 events : meetEvents});
+			 events : meetEvents}).then((response) => {
+			 	console.log(response);
+			 	if(response.status === 200){
+			 		window.location = "/html/main-menu.html";
+			 	}
+			 	else{
+			 		alert('Database Post Error');
+			 		console.log(response.success);
+			 	}
+			 });
 	}
 });
 

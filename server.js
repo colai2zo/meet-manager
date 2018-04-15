@@ -43,55 +43,86 @@ app.post('/createUser', (req,res) =>{
 	const password = req.body.password;
 	console.log('Add user ' +  username + ' with password ' + password);
 	const { salt, hash } = saltHashPassword({ password });
-    var sql = "INSERT INTO user (username, encrypted_password, salt) VALUES ('" + username + "','" + hash + "','" + salt + "')";
+	const token = crypto.randomBytes(127).toString('base64').substring(0, 127);
+    var sql = "INSERT INTO user (username, encrypted_password, salt, token) VALUES ('" + username + "','" + hash + "','" + salt + "','" + token + "')";
     con.query(sql, function(err,result){
-    	if(err) throw err;
+    	if(err) {
+    		res.send(JSON.stringify({success: false}));
+    		throw err;
+    	}else{
+    		res.send(JSON.stringify({success: true, token: token}));
+    	}
     	console.log("1 record inserted, ID: " + result.insertId);
     });
 });
 
 app.post('/login', (req, res) => {
-	authenticate({
-      username: req.body.username,
-      password: req.body.password
-    })
-    .then(({ success }) => {
-      if (success) res.sendStatus(200); 
-      else res.sendStatus(401)
-    })
+	const sql = "SELECT salt, encrypted_password FROM user WHERE username='" + req.body.username + "';";
+    con.query(sql, (err,result) => {
+    	console.log(result);
+    	if(err){
+    		res.send(JSON.stringify({success: false}));
+    		throw err;
+		}
+    	const expected_hash = result[0].encrypted_password;
+    	const salt = result[0].salt;
+    	const hash = crypto.createHash('sha512').update(salt + req.bodypassword).digest('base64');
+    	if(expected_hash != hash){
+    		res.send(JSON.stringify({success: false}));
+    	}else{
+    		const token = crypto.randomBytes(127).toString('base64').substring(0, 127);
+    		const sql = "UPDATE users SET token='" + token + "' WHERE username='" + req.body.username + "'";
+    		con.query(sql, (err,result) =>{
+    			if(err) {
+    				res.send(JSON.stringify({success: false}));
+    				throw err;
+    			}else{
+    				res.send(JSON.stringify({success: true, token: token}));
+    			}
+    		});
+    	}
+
+    });
 });
 
 app.post('/create-meet', (req, res) => {
-	const meetId = createMeetId();
 	const name  = req.body.name;
 	const date = req.body.date;
 	const location = req.body.location;
 	const type = req.body.type;
 	const events = req.body.events;
-	var sql = "INSERT INTO meets (meet_id, meet_name, meet_date, meet_location, meet_type) VALUES ('" + meetId + "','" + 
+	var sql = "INSERT INTO meets (meet_name, meet_date, meet_location, meet_type) VALUES ('" + 
 	name + "','" + date + "','" + location + "','" + type + "');";
 	con.query(sql, (err,result) => {
-		if(err) throw err;
-		console.log("1 record inserted, ID: " + result.insertId);
+		if(err) {
+			res.sendStatus(500);	
+			throw err;
+		}
+		const meetId = result.insertId;
+		console.log("1 meet record inserted with meet ID: " + result.insertId);
+
+		for(i = 0 ; i < events.length ; i++){
+			console.log(events[i] + "  :  " + i);
+			const eventName = events[i].event;
+			const gender = events[i].gender;
+			sql = "INSERT INTO events (meet_id, event_name, event_gender) VALUES ('" + meetId + "','" + eventName + "','" + gender + "');";
+			con.query(sql, (err,result) => {
+				if(err) {
+					res.sendStatus(500);	
+					throw err;
+				}
+				console.log("1 event record inserted with event ID: " + result.insertId);
+			});
+		}
+		res.sendStatus(200);
 	});
-	for(i = 0 ; i < events.length ; i++){
-		console.log(events[i] + "  :  " + i);
-		const eventId = createEventId();
-		const eventName = events[i].event;
-		const gender = events[i].gender;
-		sql = "INSERT INTO events (event_id, meet_id, event_name, event_gender) VALUES ('" + eventId + "','" + meetId + "','" + eventName + "','" + gender + "');";
-		con.query(sql, (err,result) => {
-			if(err) throw err;
-			console.log("1 record inserted, ID: " + result.insertId);
-		});
-	}
-	res.sendFile(__dirname + "/html/main-menu.html");
+	
 });
 
 // app.get('/register-runners', (req,res) =>{
 // 	const runners = req.body.runners;
 // 	for(i = 0 ; i < runners.length ; i++){
-		
+
 // 	}
 // });
 
@@ -115,75 +146,14 @@ app.get('/get-all-events-for-meet', (req,res) =>{
 });
 
 
-function authenticate ({ username, password }) {
-    console.log(`Authenticating user ${username}`)
-    return knex('user').where({ username })
-      .then(([user]) => {
-        if (!user) return { success: false }
-        const { hash } = saltHashPassword({
-          password,
-          salt: user.salt
-        })
-        return { success: hash === user.encrypted_password }
-      })
-  }
-
-function createMeetId(){
-	return randomString();
-	// var sql = "SELECT meet_id FROM meets;";
-	// var existingMeets = [];
-	// var meetId = "";
-	// con.query(sql, (err,result) =>{
-	// 	if(err) throw err;
-	// 	console.log(result);
-	// 	var isTaken = false;
-	// 	do{
-	// 		meetId = randomString();
-	// 		for(i = 0 ; i < result.length ; i++){
-	// 			console.log(result[i].meet_id + " : " + meetId);
-	// 			if(result[i].meet_id === meetId){
-	// 				isTaken = true;
-	// 			}
-	// 		}
-	// 	}while(isTaken);
-	// });
-	// return meetId;
-}
-
-function createEventId(){
-	return randomString();
-	// var sql = "SELECT event_id FROM events;";
-	// var existingEvents = [];
-	// con.query(sql, (err,result) =>{
-	// 	if(err) throw err;
-	// 	existingEvents = result;
-	// });
-	// console.log(existingEvents);
-	// var isTaken = false;
-	// var eventId = "";
-	// do{
-	// 	eventId = randomString();
-	// 	for(i = 0 ; i < existingEvents.length ; i++){
-	// 		console.log(existingEvents[i].event_id + " : " + eventId);
-	// 		if(existingEvents[i].event_id === eventId){
-	// 			isTaken = true;
-	// 		}
-	// 	}
-	// }while(isTaken);
-	// return eventId;
-}
-
-
 function saltHashPassword ({
   password,
-  salt = randomString()
 }) {
-  const hash = crypto
-    .createHmac('sha512', salt)
-    .update(password)
+	const salt = crypto.randomBytes(127).toString('base64').substring(0, 127);
+  	const hash = crypto.createHash('sha512').update(salt + password).digest('base64');
   return {
     salt,
-    hash: hash.digest('hex')
+    hash
   }
 }
 function randomString () {

@@ -10,7 +10,10 @@
   "author": "Joey Colaizzo",
   "license": "ISC",
   "dependencies": {
+    "cookie-parser": "^1.4.3",
+    "cookies": "^0.7.1",
     "express": "^4.16.2",
+    "express-session": "^1.15.6",
     "knex": "^0.14.4",
     "mysql": "^2.15.0",
     "socket.io": "^2.0.4"

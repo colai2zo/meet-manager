@@ -1,3 +1,4 @@
+'use strict';
 const createMeet = document.querySelector("#create-meet-form");
 const eventTable = document.querySelector("#event-table");
 createMeet.addEventListener('submit', function(e){
@@ -19,7 +20,6 @@ createMeet.addEventListener('submit', function(e){
 			 location : meetLocation,
 			 type : meetType,
 			 events : meetEvents}).then((response) => {
-			 	console.log(response);
 			 	if(response.status === 200){
 			 		window.location = "/html/main-menu.html";
 			 	}
@@ -72,7 +72,7 @@ function deleteEventRow(){
 	}
 }
 function addChoicesTo(selector,choices){
-	for(i = 0 ; i < choices.length ; i++){
+	for(let i = 0 ; i < choices.length ; i++){
 		const option = document.createElement('option');
 		option.value = option.innerHTML = choices[i];
 		selector.appendChild(option);
@@ -80,7 +80,7 @@ function addChoicesTo(selector,choices){
 }
 function duplicateEvents(){
 	var rows = eventTable.rows;
-	for(i = 1 ; i < rows.length ; i++){
+	for(let i = 1 ; i < rows.length ; i++){
 		console.log(rows[i].childNodes);
 		var event1 = rows[i].childNodes[0].childNodes[0].selectedIndex;
 		var gender1 = rows[i].childNodes[1].childNodes[0].selectedIndex;

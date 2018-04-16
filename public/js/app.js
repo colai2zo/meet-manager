@@ -1,3 +1,4 @@
+'use strict';
 function post (path, data) {
   return window.fetch(path, {
     method: 'POST',

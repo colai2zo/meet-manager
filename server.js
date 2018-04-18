@@ -6,13 +6,14 @@ const path = require("path");
 const http = require('http').Server(app);
 const mysql = require('mysql');
 const crypto = require('crypto');
-const knex = require('knex')(require('./knexfile'));
+const cookieParser = require('cookie-parser');
 
 
 // Set up publicly accesible files
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname,"public")));
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 app.get("/", function(req,res){
 	res.sendFile(__dirname + "/html/index.html");
@@ -108,7 +109,7 @@ app.post('/create-meet', (req, res) => {
 		const meetId = result.insertId;
 		console.log("1 meet record inserted with meet ID: " + result.insertId);
 
-		for(i = 0 ; i < events.length ; i++){
+		for(let i = 0 ; i < events.length ; i++){
 			console.log(events[i] + "  :  " + i);
 			const eventName = events[i].event;
 			const gender = events[i].gender;
@@ -177,14 +178,16 @@ app.get('/get-all-events-for-meet', (req,res) =>{
 	});
 });
 
-// app.get('/signed-in-user', (req,res) => {
-// 	authenticateToken(username, token, (auth) =>  {
-// 		if (auth) {
-// 			res.writeHead(200, {"content-type":"application/json"});
-//     		res.end(JSON.stringify({username : username}));
-//     	}
-// 	});
-// });
+app.get('/signed-in-user', (req,res) => {
+	let username = req.cookies.username;
+	let token = req.cookies.token;
+	authenticateToken(username, token, (auth) =>  {
+		if (auth) {
+			res.writeHead(200, {"content-type":"application/json"});
+    		res.end(JSON.stringify({username : username}));
+    	}
+	});
+});
 
 function authenticateToken(username, token, callback){
 	const sql = "SELECT token from user WHERE username='" + username + "';";
@@ -198,6 +201,26 @@ function authenticateToken(username, token, callback){
 		}
 		else{
 			callback(false);
+		}
+	});
+}
+
+function getSortedResultss(meetId){
+	var heatSheet = {};
+	var sql = "SELECT event_id, event_name, event_gender FROM events WHERE meet_id='" + meetId + "';";
+	con.query(sql, (err,events) => {
+		if(err) throw err;
+		console.log(events);
+		for(let i = 0 ; i < events.length ; i++){
+			let eventId = events[i].event_id;
+			let eventName = events[i].event_name;
+			let eventGender = events[i].event_gender;
+			sql = "SELECT * FROM results JOIN runners ON runners.runner_id = results.runner_id WHERE "
+			+ "event_id='" + eventId + "' ORDER BY seed_mins ASC, seed_secs ASC, seed_millis ASC;";
+			con.query(sql, (err,results) =>{
+				if(err) throw err;
+				
+			});
 		}
 	});
 }

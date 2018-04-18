@@ -11,7 +11,7 @@ createMeet.addEventListener('submit', function(e){
 		const meetLocation = document.querySelector('#meet-location').value;
 		const meetType = document.querySelector('#meet-type').value;
 		const meetEvents = [];
-		for(i = 1 ; i < eventTable.rows.length ; i++){
+		for(let i = 1 ; i < eventTable.rows.length ; i++){
 			meetEvents.push(getEventAtRow(i));
 		}
 		post('/create-meet' , 
@@ -84,7 +84,7 @@ function duplicateEvents(){
 		console.log(rows[i].childNodes);
 		var event1 = rows[i].childNodes[0].childNodes[0].selectedIndex;
 		var gender1 = rows[i].childNodes[1].childNodes[0].selectedIndex;
-		for(j = i + 1; j < rows.length ; j++){
+		for(let j = i + 1; j < rows.length ; j++){
 			var event2 = rows[j].childNodes[0].childNodes[0].selectedIndex;
 			var gender2 = rows[j].childNodes[1].childNodes[0].selectedIndex;
 			console.log(event1 + " : " + event2 +" : " + gender1 + " : " + gender2);

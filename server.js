@@ -117,15 +117,19 @@ app.get("/login", function(req,res){
 });
 
 app.get('/main-menu', (req,res) =>{
-	console.log('/MAIN-MENU');
 	if(req.isAuthenticated()){
-		console.log('IS AUTH');
-		console.log(req.sessionID);
-		console.log(req.user);
 		res.sendFile(__dirname + "/public/html/main-menu.html");
 	}else{
-		console.log('NOT AUTH');
 		res.redirect('/');
+	}
+});
+
+app.get('/signed-in-user', (req,res) =>{
+	if(req.isAuthenticated()){
+		res.writeHead(200, {"content-type":"application/json"});
+		res.end(JSON.stringify({success: true, user: req.user}));
+	}else{
+		res.sendStatus(401);
 	}
 });
 
@@ -142,8 +146,8 @@ app.post('/createUser', (req,res) =>{
     		res.end(JSON.stringify({success: false}));
     		throw err;
     	}else{
-    		res.writeHead(200, {"content-type":"application/json"});
-    		res.end(JSON.stringify({success: true, token: token}));
+			res.writeHead(200, {"content-type":"application/json"});
+			res.end(JSON.stringify({success: true, token: token}));
     	}
     	console.log("1 record inserted, ID: " + result.insertId);
     });
@@ -175,6 +179,12 @@ app.post('/login', (req, res, next) => {
 			});
 		}
 	})(req,res,next);
+});
+
+app.post('/logout', (req,res) => {
+	req.logout();
+	req.session.destroy();
+	res.sendStatus(200);
 });
 
 app.post('/create-meet', (req, res) => {
@@ -283,15 +293,13 @@ function getSortedResults(meetId){
 	});
 }
 
-function saltHashPassword ({
-  password
-}) {
+function saltHashPassword ({password}){
 	const salt = crypto.randomBytes(127).toString('base64').substring(0, 127);
-  	const hash = crypto.createHash('sha512').update(salt + password).digest('base64');
-  return {
-    salt,
-    hash
-  }
+	const hash = crypto.createHash('sha512').update(salt + password).digest('base64');
+	return {
+		salt,
+		hash
+	}
 }
 
 //Listen on port 8080

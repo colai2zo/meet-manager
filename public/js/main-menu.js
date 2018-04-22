@@ -1,7 +1,18 @@
 $.ajax({url: "/signed-in-user" , method: "GET" ,
-	success: function(result){
-		var welcome = $('<h2>Welcome, ' + result.username + '!</h2>');
+	success: (result) => {
+		var welcome = $('<h2>Welcome, ' + result.user.username + '!</h2>');
 		var container = $("#welcome-div");
 		container.append(welcome);
 	}
+});
+$(document).ready(() => {
+	$('#logout-button').click(() => {
+		$.ajax({
+			url: '/logout',
+			method: 'POST',
+			success: () =>{
+				window.location = '/';
+			}
+		});
+	});
 });

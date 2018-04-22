@@ -12,9 +12,9 @@ if(createUser){
 			 		console.log(data);
 			 		if(data.success == true){
 						const token = data.token;
-						document.cookie="username=" + username + ";token=" + token + ";path=/";
-						console.log(document.cookie);
-						window.location.href = '/html/main-menu.html';
+						document.cookie="username=" + username + ";path=/";
+						document.cookie="token=" + token + ";path=/";
+						window.location.href = '/main-menu';
 					}else{
 						alert('Internal Server Error. Please Try Again');
 					}	

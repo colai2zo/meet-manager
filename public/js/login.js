@@ -3,17 +3,30 @@ $(document).ready( function(){
 		e.preventDefault();
 		const username = $('#username').val();
 		const password = $('#password').val();
-		post('/login', { username, password }).then((result) => {
-			result.json().then(function(data){
-				if (data.success == true){
-					const token = data.token;
-					document.cookie="username=" + username + ";path=/";
-					document.cookie="token=" + token + ";path=/";
-					window.location.href = '/html/main-menu.html';
-				} else{
-					alert('Login failed. Please try again.');
-				} 
-			});
-	    });
+		// post('/login', { username, password });
+		$.ajax({
+			type: "POST",
+			xhrFields: {withCredentials: true},
+			url: '/login',
+			data: {
+				username: username,
+				password: password
+			},
+			success: (result) => {
+				console.log(result);
+				if(result.success == true){
+					window.location.href = '/main-menu';
+				}
+			},
+			statusCode: {
+				401: () => {
+					alert('Invalid login credentials. Please try again.');
+					$('#login-form').each(() =>{
+						this.reset();
+					});
+				}
+			}
+		});
+
 	});
 });

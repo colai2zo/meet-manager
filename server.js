@@ -1,4 +1,5 @@
 'use strict';
+/** IMPORT MODULES **/
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
@@ -6,25 +7,26 @@ const path = require("path");
 const http = require('http').Server(app);
 const mysql = require('mysql');
 const crypto = require('crypto');
-const cookieParser = require('cookie-parser');
+const uuid = require('uuid/v4');
+const session = require('express-session');
+const MySQLStore = require('mysql-express-session')(session);
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
-
-// Set up publicly accesible files
+/** SETUP PUBLICLY ACCESSIBLE FILES **/
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname,"public")));
 app.use(bodyParser.json());
-app.use(cookieParser());
-
-app.get("/", function(req,res){
-	res.sendFile(__dirname + "/html/index.html");
+app.use((req, res, next) => {
+	res.header('Access-Control-Allow-Credentials', true);
+	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+	res.header("Access-Control-Allow-Origin", "http://localhost");
+	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	next();
 });
 
-app.get("/display-meets", function(req,res){
-	res.sendFile(__dirname + "/public/html/display-meets.html");
-});
-
-//Connect to db
-var con = mysql.createConnection({
+/** DATABASE SETUP **/
+const con = mysql.createConnection({
 	host: "localhost",
 	user: "root",
 	password: "1234",
@@ -36,9 +38,95 @@ con.connect((err) => {
   console.log("Connected!");
 });
 
-//Listen on port 8080
-http.listen(process.env.PORT || 8080, function(){
-	console.log('listening on ' + (process.env.PORT || 8080));
+/** SEESSION SETUP **/
+const sessionStore = new MySQLStore({},con);
+app.use(session({
+	genid: (req) => {
+		console.log('Inside the session middleware');
+		console.log(req.sessionID);
+		return uuid();
+	  },
+	store: sessionStore,
+	secret: '9KD6/+7a+le6Yt45XxLmi7bGZUXgmPj+xenTR46IqcNogNBXEOWO/HsEG16+9xW8hz0pkNT/gMrK1f+GBG/z+l1gXXvbIAaq71lm2UQfcuAfWQSnVN9FrfxwSNCpTE',
+	resave: false,
+	saveUninitialized: true,
+	cookie: {
+		secure: false
+	}
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+/** Configure Passport.js to authenticate username and password **/
+passport.use(new LocalStrategy( (username, password, done) => {
+    	const sql = "SELECT * FROM user WHERE username='" + username + "';";
+		con.query(sql, (err,result) => {
+			if(err){
+				done(err); 
+				throw err; 
+			} 
+			if(result[0]){ //Make sure that this user exists.
+				const expected_hash = result[0].encrypted_password;
+				const salt = result[0].salt;
+				const hash = crypto.createHash('sha512').update(salt + password).digest('base64');
+				//NOT AUTHENTICATED
+				if(expected_hash != hash){
+					return done(null, false, {message: 'Invalid Credentials.\n'});
+				}
+				//AUTHENTICATED
+				else{
+					return done(null, {id: result[0].id, username: result[0].username, team_name: result[0].team_name});
+				}
+			}
+			else{
+				return done(null, false, {message: 'Invalid Credentials.\n'});
+			}
+		});
+	}
+));
+
+// Tell passport how to serialize the user
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+// Tell passport how to deserialize the user
+passport.deserializeUser((id, done) => {
+	const sql = "SELECT username, team_name FROM user WHERE id='" + id + "';"
+	con.query(sql, (err,result) =>{
+		if(err){
+			done(err, false);
+			throw err;
+		}
+		done(null, result[0]);
+	});
+});
+
+/** ROUTING FUNCTIONS **/
+app.get("/", function(req,res){
+	console.log(req.sessionID)
+	res.sendFile(__dirname + "/html/index.html");
+});
+
+app.get("/display-meets", function(req,res){
+	res.sendFile(__dirname + "/public/html/display-meets.html");
+});
+
+app.get("/login", function(req,res){
+	res.sendFile(__dirname + "/public/html/login.html");
+});
+
+app.get('/main-menu', (req,res) =>{
+	console.log('/MAIN-MENU');
+	if(req.isAuthenticated()){
+		console.log('IS AUTH');
+		console.log(req.sessionID);
+		console.log(req.user);
+		res.sendFile(__dirname + "/public/html/main-menu.html");
+	}else{
+		console.log('NOT AUTH');
+		res.redirect('/');
+	}
 });
 
 app.post('/createUser', (req,res) =>{
@@ -61,36 +149,32 @@ app.post('/createUser', (req,res) =>{
     });
 });
 
-app.post('/login', (req, res) => {
-	const sql = "SELECT salt, encrypted_password FROM user WHERE username='" + req.body.username + "';";
-	console.log(sql);
-    con.query(sql, (err,result) => {
-    	console.log(result);
-    	if(err){
-    		res.send(JSON.stringify({success: false}));
-    		throw err;
+app.post('/login', (req, res, next) => {
+	console.log(req.sessionID);
+	passport.authenticate('local', (err, user, info) => {
+		if(info){
+			res.writeHead(401, {"content-type":"application/json"});
+    		res.end(JSON.stringify({success: false}));
 		}
-    	const expected_hash = result[0].encrypted_password;
-    	console.log("EXPECTED: " + expected_hash);
-    	const salt = result[0].salt;
-    	const hash = crypto.createHash('sha512').update(salt + req.body.password).digest('base64');
-    	console.log("ACTUAL: " + hash);
-    	if(expected_hash != hash){
-    		res.send(JSON.stringify({success: false}));
-    	}else{
-    		const token = crypto.randomBytes(127).toString('base64').substring(0, 127);
-    		const sql = "UPDATE user SET token='" + token + "' WHERE username='" + req.body.username + "'";
-    		con.query(sql, (err,result) =>{
-    			if(err) {
-    				res.send(JSON.stringify({success: false}));
-    				throw err;
-    			}else{
-    				res.send(JSON.stringify({success: true, token: token}));
-    			}
-    		});
-    	}
-
-    });
+		else if(err){
+			res.writeHead(500, {"content-type":"application/json"});
+    		res.end(JSON.stringify({success: false}));
+		}
+		else if(!user){
+			res.writeHead(401, {"content-type":"application/json"});
+    		res.end(JSON.stringify({success: false}));
+		}
+		else{
+			req.login(user, (err) => {
+				if(err){
+					res.writeHead(400, {"content-type":"application/json"});
+					res.end(JSON.stringify({success: false}));
+				}
+				res.writeHead(200, {"content-type":"application/json"});
+				res.end(JSON.stringify({success: true}));
+			});
+		}
+	})(req,res,next);
 });
 
 app.post('/create-meet', (req, res) => {
@@ -178,34 +262,8 @@ app.get('/get-all-events-for-meet', (req,res) =>{
 	});
 });
 
-app.get('/signed-in-user', (req,res) => {
-	let username = req.cookies.username;
-	let token = req.cookies.token;
-	authenticateToken(username, token, (auth) =>  {
-		if (auth) {
-			res.writeHead(200, {"content-type":"application/json"});
-    		res.end(JSON.stringify({username : username}));
-    	}
-	});
-});
-
-function authenticateToken(username, token, callback){
-	const sql = "SELECT token from user WHERE username='" + username + "';";
-	console.log(sql);
-	con.query(sql, (err,result) => {
-		if(err){
-			callback(null);
-		}
-		else if(result[0].token === token){
-			callback(true);
-		}
-		else{
-			callback(false);
-		}
-	});
-}
-
-function getSortedResultss(meetId){
+/** HELPER FUNCTIONS **/
+function getSortedResults(meetId){
 	var heatSheet = {};
 	var sql = "SELECT event_id, event_name, event_gender FROM events WHERE meet_id='" + meetId + "';";
 	con.query(sql, (err,events) => {
@@ -226,7 +284,7 @@ function getSortedResultss(meetId){
 }
 
 function saltHashPassword ({
-  password,
+  password
 }) {
 	const salt = crypto.randomBytes(127).toString('base64').substring(0, 127);
   	const hash = crypto.createHash('sha512').update(salt + password).digest('base64');
@@ -235,6 +293,8 @@ function saltHashPassword ({
     hash
   }
 }
-function randomString () {
-  return crypto.randomBytes(4).toString('hex')
-}
+
+//Listen on port 8080
+http.listen(process.env.PORT || 8080, function(){
+	console.log('listening on ' + (process.env.PORT || 8080));
+});

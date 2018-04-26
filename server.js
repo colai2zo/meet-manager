@@ -225,6 +225,20 @@ app.get('/get-all-events-for-meet', (req,res) =>{
 	});
 });
 
+app.get('/event-results', (req,res) =>{
+	const eventId = req.query.eventId;
+	getSortedResults(eventId, (err,result) => {
+		if(err){
+			res.writeHead(500, {"content-type":"application/json"});
+    		res.end(JSON.stringify({success: false}));
+			throw err;
+		}else{
+			res.writeHead(200, {"content-type":"application/json"});
+    		res.end(JSON.stringify({success: true, results: result}));
+		}
+	});
+});
+
 app.get('/is-accepting-entries', (req,res) => {
 	const meetId = req.query.meetId;
 	const sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId + "';";
@@ -402,21 +416,26 @@ app.post('/toggle-accepting-entries', (req,res) =>{
 });
 
 /** HELPER FUNCTIONS **/
-function getSortedResults(meetId){
-	let results = {};
-	let sql = "SELECT event_id, event_name, event_gender FROM events WHERE meet_id='" + (meetId) + "';";
-	con.query(sql, (err,events) => {
-		if(err) throw err;
-		console.log(events);
-		for(let i = 0 ; i < events.length ; i++){
-			let eventId = events[i].event_id;
-			let eventName = events[i].event_name;
-			let eventGender = events[i].event_gender;
+function getSortedResults(eventId,cb){
+	let sql = "SELECT event_id, event_name, event_gender FROM events WHERE event_id='" + (eventId) + "';";
+	con.query(sql, (err,result) => {
+		if(err) cb(err);
+		else{
+			let event = result[0];
 			sql = "SELECT * FROM results JOIN runners ON runners.runner_id = results.runner_id WHERE "
-			+ "event_id='" + (eventId) + "' ORDER BY seed_mins ASC, seed_secs ASC, seed_millis ASC;";
-			con.query(sql, (err,results) =>{
-				if(err) throw err;
-				
+			+ "event_id='" + event.event_id + "' ORDER BY result_mins ASC, result_secs ASC, result_millis ASC, seed_mins ASC, seed_secs ASC, seed_millis ASC;";
+			con.query(sql, (err,results) =>{ 
+				if(err) cb(err);
+				else if(results){
+					cb(null, {
+						event: {
+							numberOfParticipants: results.length,
+							eventName: event.event_name,
+							eventGender: event.event_gender
+						},
+						results: results
+					});
+				}
 			});
 		}
 	});

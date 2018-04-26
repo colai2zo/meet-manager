@@ -151,7 +151,16 @@ app.get('/main-menu', (req,res) => {
 
 app.get('/manage-meet', (req,res) => {
 	if(req.isAuthenticated()){
-		res.sendFile(__dirname + "/public/html/manage-meet.html");
+		const sql = "SELECT meet_id FROM meets WHERE meet_id='" + req.query.meetId + "' AND team_name='" + req.user.team_name + "';";
+		con.query(sql, (err,result) => {
+			if(err) throw err;
+			else if(result[0]){
+				res.sendFile(__dirname + "/public/html/manage-meet.html");
+			}
+			else{
+				res.redirect('/my-meets');
+			}
+		});
 	}else{
 		res.redirect('/');
 	}
@@ -201,7 +210,7 @@ app.get('/get-all-events-for-meet', (req,res) =>{
 
 app.get('/is-accepting-entries', (req,res) =>{
 	const meetId = req.query.meetId;
-	const sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId = "';";
+	const sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId + "';";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
 		console.log(result);
@@ -273,8 +282,8 @@ app.post('/create-meet', (req, res) => {
 		console.log("EVENTS: " + events);
 		const team_name = req.user.team_name;
 		console.log(team_name);
-		let sql = ("INSERT INTO meets (meet_name, meet_date, meet_location, meet_type, team_name) VALUES ('" + 
-		name + "','" + date + "','" + location + "','" + type + "','" + team_name+ "');");
+		let sql = ("INSERT INTO meets (meet_name, meet_date, meet_location, meet_type, team_name, accepting_entries) VALUES ('" + 
+		name + "','" + date + "','" + location + "','" + type + "','" + team_name + "'," + true + ");");
 		con.query(sql, (err,result) => {
 			if(err) {
 				res.sendStatus(500);	
@@ -287,7 +296,7 @@ app.post('/create-meet', (req, res) => {
 				console.log(events[i] + "  :  " + i);
 				const eventName = events[i].event;
 				const gender = events[i].gender;
-				sql = "INSERT INTO events (meet_id, event_name, event_gender) VALUES ('" + (meetId) + "','" + (eventName) + "','" + (gender) + "');";
+				sql = "INSERT INTO events (meet_id, event_name, event_gender, scored) VALUES ('" + (meetId) + "','" + (eventName) + "','" + (gender) + "'," + false + ");";
 				con.query(sql, (err,result) => {
 					if(err) {
 						res.sendStatus(500);	
@@ -353,6 +362,18 @@ app.post('/register-runners', (req,res) =>{
 	else {
 		res.redirect('/');
 	}
+});
+
+app.post('/toggle-accepting-entries', (req,res) =>{
+	console.log(req.body.acceptingEntries);
+	const sql = "UPDATE meets SET accepting_entries=" + req.body.acceptingEntries + " WHERE meet_id='" + req.body.meetId + "';";
+	con.query(sql, (err,result) =>{
+		if(err) throw err;
+		else{
+			console.log('Meet ' + req.body.meetId + " acceptingEntries toggled to " + req.body.acceptingEntries);
+			res.sendStatus(200);
+		}
+	});
 });
 
 /** HELPER FUNCTIONS **/

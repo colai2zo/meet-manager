@@ -27,3 +27,7 @@
 	top: 0;
 	right: 0;
 }
+.card{
+	border: solid #0D47A1 3px;
+	border-radius: 25px
+}

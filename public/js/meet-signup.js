@@ -4,7 +4,6 @@ $(document).ready(function(){
 		
 		success: (result) => {
 			var meetDiv = $('#events-div');
-			console.log(result);
 			var events = JSON.parse(result.toString());
 			for(let i = 0 ; i < events.length ; i++){
 				let header = $("<div class='card-header'>" + events[i].event_name + " (" +  events[i].event_gender + ")</div>");
@@ -61,14 +60,25 @@ $(document).ready(function(){
 				seed_secs : seed_secs,
 				seed_millis : seed_millis
 			}
-			entryArray.push(entry_json);
+			entryArray.push((entry_json));
 		}
-		console.log(entryArray);
-		post('/register-runners', {entries : entryArray}).then((result) =>{
-			if(result.status == 500){
-				alert('Internal Server Error.');
-			}else if(result.status == 200){
-				window.location.href = '/html/main-menu.html';
+		let data = {
+				meet_id: get('meetId'),
+				entries: JSON.stringify(entryArray)
+			}
+		console.log(data);
+		$.ajax({
+			type: "POST",
+			xhrFields: {withCredentials: true},
+			url: '/register-runners',
+			data: data,
+			success: () => {
+				alert('You have successfully registered for the meet');
+				window.location = '/main-menu';
+			},
+			error: () => {
+				alert('There was an error registering for the meet');
+				window.location = '/display-meets';
 			}
 		});
 	});

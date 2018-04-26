@@ -12,22 +12,28 @@ createMeet.addEventListener('submit', function(e){
 		const meetType = document.querySelector('#meet-type').value;
 		const meetEvents = [];
 		for(let i = 1 ; i < eventTable.rows.length ; i++){
+			console.log(getEventAtRow(i));
 			meetEvents.push(getEventAtRow(i));
 		}
-		post('/create-meet' , 
-			{name : meetName,
-			 date : meetDate,
-			 location : meetLocation,
-			 type : meetType,
-			 events : meetEvents}).then((response) => {
-			 	if(response.status === 200){
-			 		window.location = "/html/main-menu.html";
-			 	}
-			 	else{
-			 		alert('Database Post Error');
-			 		console.log(response.success);
-			 	}
-			 });
+		console.log(meetEvents);
+		$.ajax({
+			type: "POST",
+			xhrFields: {withCredentials: true},
+			url: '/create-meet',
+			data: { name : meetName,
+					date : meetDate,
+					location : meetLocation,
+					type : meetType,
+					events : JSON.stringify(meetEvents)},
+			success: () => {
+				alert('Meet Created Successfully. Please check the meets page to score your meet.');
+				window.location = "/main-menu";
+			},
+			error: () => {
+				alert("There was an error in creating this meet.");
+				createMeet.clear();
+			}
+		});	
 	}
 });
 

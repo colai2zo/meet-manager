@@ -149,6 +149,14 @@ app.get('/main-menu', (req,res) => {
 	}
 });
 
+app.get('/manage-meet', (req,res) => {
+	if(req.isAuthenticated()){
+		res.sendFile(__dirname + "/public/html/manage-meet.html");
+	}else{
+		res.redirect('/');
+	}
+});
+
 app.get('/signed-in-user', (req,res) => {
 	if(req.isAuthenticated()){
 		res.writeHead(200, {"content-type":"application/json"});
@@ -183,7 +191,17 @@ app.get('/get-my-meets', (req,res) =>{
 app.get('/get-all-events-for-meet', (req,res) =>{
 	const meetId = req.query.meetId;
 	console.log(meetId);
-	const sql = "SELECT event_id, event_name, event_gender FROM events WHERE meet_id='" + (meetId) + "';";
+	const sql = "SELECT * FROM events WHERE meet_id='" + (meetId) + "';";
+	con.query(sql, (err,result) => {
+		if(err) throw err;
+		console.log(result);
+		res.send(JSON.stringify(result));
+	});
+});
+
+app.get('/is-accepting-entries', (req,res) =>{
+	const meetId = req.query.meetId;
+	const sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId = "';";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
 		console.log(result);

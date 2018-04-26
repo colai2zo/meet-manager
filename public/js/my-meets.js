@@ -9,7 +9,7 @@ $(document).ready(function(){
 				let body = $("<div class='card-body'><p>Date: " + meets[i].meet_date + "</p><p>Location: " + meets[i].meet_location + "</p></div>");
 				let card = $("<div class='card text-center'></div>");
 				let container = $("<div class='col-md-4 col-sm-2'</div>");
-				var button = $("<a class='btn btn-primary' href='/html/manage-meet?meetId=" + meets[i].meet_id + "'>Manage</a>");
+				var button = $("<a class='btn btn-primary' href='/manage-meet?meetId=" + meets[i].meet_id + "'>Manage</a>");
 				body.append(button);
 				card.append(header);
 				card.append(body);

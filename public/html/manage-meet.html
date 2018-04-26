@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title id="page-title"></title>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"
+	integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+	crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" 
+	integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+	crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" 
+	integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+	<link rel="stylesheet" href="/css/style.css" >
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" 
+	integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" 
+	crossorigin="anonymous"></script>
+	<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+	<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+</head>
+<body>
+	<div class="container">
+		<div class="text-center">
+			<h1>Manage Meet:</h1>
+		</div>
+		<div class="form-control">
+			<div class="form-group">
+				<div class="checkbox">
+					<label for="accept-entries-toggle">Accepting Entries? </label>
+					<input id="accept-entries-toggle" type="checkbox" data-toggle="toggle">
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="btn-toolbar">
+					<button id="heat-sheet-button" class="btn btn-primary" disabled="true">View Heat Sheet</button>
+					<button id="results-button" class="btn btn-primary" disabled="true">View Current Results</button>
+				</div>
+			</div>
+		</div>
+		<div class="container text-center">
+			<h4>Score / Manage Events:</h4>
+			<table id="events-table">
+				<tr>
+					<th>Event Name</th>
+					<th>Gender</th>
+					<th>Status</th>
+					<th></th>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="/js/manage-meet.js"></script>
+</body>
+</html>

@@ -31,3 +31,7 @@
 	border: solid #0D47A1 3px;
 	border-radius: 25px
 }
+#accept-entries-toggle{
+	border: solid black 1px;
+	padding-left: 10px
+}

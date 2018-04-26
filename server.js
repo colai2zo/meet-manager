@@ -105,8 +105,11 @@ passport.deserializeUser((id, done) => {
 
 /** ROUTING FUNCTIONS **/
 app.get("/", (req,res) => {
-	console.log(req.sessionID)
-	res.sendFile(__dirname + "/html/index.html");
+	if(req.isAuthenticated()){
+		res.redirect('/main-menu');
+	}else{
+		res.sendFile(__dirname + "/html/index.html");
+	}
 });
 
 app.get("/login", (req,res) => {
@@ -166,6 +169,20 @@ app.get('/manage-meet', (req,res) => {
 	}
 });
 
+app.get('/meet-signup', (req,res) =>{
+	if(req.isAuthenticated()){
+		isAcceptingEntries(req.query.meetId, (acceptingEntries) =>{
+			if(acceptingEntries === true){
+				res.sendFile(__dirname + "/public/html/meet-signup.html");
+			}else{
+				res.redirect('/display-meets');
+			}
+		});
+	}else{
+		res.redirect('/');
+	}
+});
+
 app.get('/signed-in-user', (req,res) => {
 	if(req.isAuthenticated()){
 		res.writeHead(200, {"content-type":"application/json"});
@@ -174,16 +191,16 @@ app.get('/signed-in-user', (req,res) => {
 		res.sendStatus(401);
 	}
 });
-
-app.get('/get-all-meets', (req,res) =>{
-	const sql = "SELECT * FROM meets;";
+ 
+app.get('/meets-accepting-entries', (req,res) => {
+	const sql = "SELECT * FROM meets WHERE accepting_entries=" + true + ";";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
 		res.send(JSON.stringify(result));
 	});
 });
 
-app.get('/get-my-meets', (req,res) =>{
+app.get('/get-my-meets', (req,res) => {
 	if(req.isAuthenticated() && req.user){
 		const sql = "SELECT * FROM meets WHERE team_name='" + req.user.team_name + "';";
 		con.query(sql, (err,result) => {
@@ -208,7 +225,7 @@ app.get('/get-all-events-for-meet', (req,res) =>{
 	});
 });
 
-app.get('/is-accepting-entries', (req,res) =>{
+app.get('/is-accepting-entries', (req,res) => {
 	const meetId = req.query.meetId;
 	const sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId + "';";
 	con.query(sql, (err,result) => {
@@ -315,47 +332,55 @@ app.post('/create-meet', (req, res) => {
 
 app.post('/register-runners', (req,res) =>{
 	if(req.isAuthenticated() && req.user){
-		const entries = JSON.parse(req.body.entries);
-		const team_name = req.user.team_name;
 		const meet_id = req.body.meet_id;
-		console.log("ENTRIES: " + entries);
-		var sql = "INSERT INTO attendance (meet_id, team_name) VALUES ('" + (meet_id) + "','" + (team_name) + "');";
-		con.query(sql, (err,result) => {
-			if(err) {
-				res.sendStatus(500);
-				throw err;
-			}
-			else{
-				for(let i = 0 ; i < entries.length ; i++){
-					let runner_name = entries[i].name;
-					let runner_grade = entries[i].grade;
-					let event_id = entries[i].event_id;
-					let seed_mins = entries[i].seed_mins;
-					let seed_secs = entries[i].seed_secs;
-					let seed_millis = entries[i].seed_millis;
-					let runner_id = "";
-					console.log("1 Attendence entry updated with ID: " + result.insertId);
-					sql = "INSERT INTO runners (runner_name, runner_grade, team_name) VALUES ('" + runner_name + "','" + runner_grade + "',' ');";
-					con.query(sql, (err,result) => {
-						if(err) {
-							res.sendStatus(500);
-							throw err;
-						}
-						else{
-							runner_id = result.insertId;
-							console.log("1 runner record inserted with runner ID: " + result.insertId);
-							sql = "INSERT INTO results (event_id, runner_id, seed_mins, seed_secs, seed_millis, result_mins, result_secs, result_millis, team_name) VALUES ('" + (event_id) + "','" + (runner_id) + "','" + (seed_mins) + "','" + (seed_secs) + "','" + (seed_millis) + "','0','0','0','" + (team_name) + "');";
+		isAcceptingEntries(meet_id, function(acceptingEntries){
+			if(acceptingEntries === true){
+				const entries = JSON.parse(req.body.entries);
+				const team_name = req.user.team_name;
+				console.log("ENTRIES: " + entries);
+				var sql = "INSERT INTO attendance (meet_id, team_name) VALUES ('" + (meet_id) + "','" + (team_name) + "');";
+				con.query(sql, (err,result) => {
+					if(err) {
+						res.sendStatus(500);
+						throw err;
+					}
+					else{
+						for(let i = 0 ; i < entries.length ; i++){
+							let runner_name = entries[i].name;
+							let runner_grade = entries[i].grade;
+							let event_id = entries[i].event_id;
+							let seed_mins = entries[i].seed_mins;
+							let seed_secs = entries[i].seed_secs;
+							let seed_millis = entries[i].seed_millis;
+							let runner_id = "";
+							console.log("1 Attendence entry updated with ID: " + result.insertId);
+							sql = "INSERT INTO runners (runner_name, runner_grade, team_name) VALUES ('" + runner_name + "','" + runner_grade + "',' ');";
 							con.query(sql, (err,result) => {
 								if(err) {
 									res.sendStatus(500);
 									throw err;
-								}else{
-									console.log("1 result record inserted with submission ID: " + result.insertId);
+								}
+								else{
+									runner_id = result.insertId;
+									console.log("1 runner record inserted with runner ID: " + result.insertId);
+									sql = "INSERT INTO results (event_id, runner_id, seed_mins, seed_secs, seed_millis, result_mins, result_secs, result_millis, team_name) VALUES ('" + (event_id) + "','" + (runner_id) + "','" + (seed_mins) + "','" + (seed_secs) + "','" + (seed_millis) + "','0','0','0','" + (team_name) + "');";
+									con.query(sql, (err,result) => {
+										if(err) {
+											res.sendStatus(500);
+											throw err;
+										}else{
+											console.log("1 result record inserted with submission ID: " + result.insertId);
+										}
+									});
 								}
 							});
 						}
-					});
-				}
+						res.sendStatus(200);
+					}
+				});
+			}
+			else{
+				res.sendStatus(403);
 			}
 		});
 	}
@@ -394,6 +419,23 @@ function getSortedResults(meetId){
 				
 			});
 		}
+	});
+}
+
+function isAcceptingEntries(meetId,cb){
+	let sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId + "';";
+	var accepting = false
+	con.query(sql, (err,result) =>{
+		if(err) throw(err);
+		else{
+			if(result[0].accepting_entries === 1){
+				console.log("TRUE");
+				cb(true);
+			} else{
+				console.log("FALSE");
+				cb(false);
+			}
+		} 
 	});
 }
 

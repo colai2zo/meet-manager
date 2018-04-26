@@ -75,9 +75,15 @@ $(document).ready(function(){
 				alert('You have successfully registered for the meet');
 				window.location = '/main-menu';
 			},
-			error: () => {
-				alert('There was an error registering for the meet');
-				window.location = '/display-meets';
+			statusCode: {
+				500: () =>{
+					alert('There was an error registering for the meet');
+					window.location = '/display-meets';
+				},
+				403: () => {
+					alert('Registration for this meet has been closed.');
+					window.location = '/display-meets';
+				}
 			}
 		});
 	});

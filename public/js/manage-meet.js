@@ -8,8 +8,8 @@ $(document).ready( () => {
 	$.ajax({url: "/is-accepting-entries?meetId=" + get('meetId') , method: "GET",
 		success: (result) => {
 			acceptingEntries = ((JSON.parse(result)[0].accepting_entries === 1) ? true : false);
+			$('#accept-entries-toggle').change(() => toggleAcceptingEntries($('#accept-entries-toggle').prop('checked')));
 			$('#accept-entries-toggle').bootstrapToggle(acceptingEntries ? 'on' : 'off');
-			$('#accept-entries-toggle').change(() => toggleAcceptingEvents($('#accept-entries-toggle').prop('checked')));
 		}
 	});
 
@@ -66,7 +66,7 @@ function populateTable(){
 	});
 }
 
-function toggleAcceptingEvents(accepting){
+function toggleAcceptingEntries(accepting){
 	acceptingEntries = accepting;
 	console.log(accepting);
 	$.ajax({

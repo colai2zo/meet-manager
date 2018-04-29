@@ -13,6 +13,7 @@ const MySQLStore = require('mysql-express-session')(session);
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const SqlString = require('sqlstring');
+const Promise = require('promise')
 
 /** SETUP PUBLICLY ACCESSIBLE FILES **/
 app.use(bodyParser.urlencoded({extended: false}));
@@ -214,6 +215,20 @@ app.get('/get-my-meets', (req,res) => {
 	}
 });
 
+app.get('/meet-info', (req,res) => {
+	if(req.isAuthenticated()){
+		const sql = "SELECT * FROM meets WHERE meet_id='" + req.query.meet_id + "';";
+		con.query(sql, (err,result) => {
+			if(err) throw err;
+			console.log(result);
+			res.send(JSON.stringify(result));
+		});
+	}
+	else{
+		res.redirect('/');
+	}
+});
+
 app.get('/get-all-events-for-meet', (req,res) =>{
 	const meetId = req.query.meetId;
 	console.log(meetId);
@@ -227,14 +242,42 @@ app.get('/get-all-events-for-meet', (req,res) =>{
 
 app.get('/event-results', (req,res) =>{
 	const eventId = req.query.eventId;
-	getSortedResults(eventId, (err,result) => {
+	console.log(eventId);
+	getSortedResults(eventId).then((result) => {
+		res.writeHead(200, {"content-type":"application/json"});
+		res.end(JSON.stringify({success: true, info: result}));
+	}, (err) => {
+		res.writeHead(500, {"content-type":"application/json"});
+		res.end(JSON.stringify({success: false}));
+		throw err;
+	});
+});
+
+app.get('/meet-results', (req,res) => {
+	const meetId = req.query.meetId;
+	let sql = "SELECT * FROM meets"
+
+	const sql = "SELECT event_id FROM events WHERE meet_id='" + meetId + "'";
+	con.query(sql, async function(err,result){
 		if(err){
 			res.writeHead(500, {"content-type":"application/json"});
-    		res.end(JSON.stringify({success: false}));
+			res.end(JSON.stringify({success: false}));
 			throw err;
 		}else{
+			let results = [];
+			for(let i = 0 ; i < result.length ; i++){
+				let eventId = result[i].event_id;
+				try{
+					const result = await getSortedResults(eventId);
+					console.log(result);
+					results.push(result);
+				} catch(e) {
+					res.writeHead(500, {"content-type":"application/json"});
+					res.end(JSON.stringify({success: false}));
+				}
+			}
 			res.writeHead(200, {"content-type":"application/json"});
-    		res.end(JSON.stringify({success: true, results: result}));
+			res.end(JSON.stringify({success: true, meetResults: results}));
 		}
 	});
 });
@@ -255,7 +298,7 @@ app.post('/create-user', (req,res) => {
 	const teamName = req.body.teamName;
 	const { salt, hash } = saltHashPassword({ password });
     const sql = "INSERT INTO user (username, team_name, encrypted_password, salt) VALUES ('" + (username) + "','" + (teamName) + "','" + (hash) + "','" + (salt) + "')";
-    con.query(sql, function(err,result){
+    con.query(sql, (err,result) => {
     	if(err) {
     		res.writeHead(400, {"content-type":"application/json"});
     		res.end(JSON.stringify({success: false}));
@@ -368,7 +411,7 @@ app.post('/register-runners', (req,res) =>{
 							let seed_millis = entries[i].seed_millis;
 							let runner_id = "";
 							console.log("1 Attendence entry updated with ID: " + result.insertId);
-							sql = "INSERT INTO runners (runner_name, runner_grade, team_name) VALUES ('" + runner_name + "','" + runner_grade + "',' ');";
+							sql = "INSERT INTO runners (runner_name, runner_grade, team_name) VALUES ('" + runner_name + "','" + runner_grade + "','" + team_name + "');";
 							con.query(sql, (err,result) => {
 								if(err) {
 									res.sendStatus(500);
@@ -416,29 +459,33 @@ app.post('/toggle-accepting-entries', (req,res) =>{
 });
 
 /** HELPER FUNCTIONS **/
-function getSortedResults(eventId,cb){
+function getSortedResults(eventId){
 	let sql = "SELECT event_id, event_name, event_gender FROM events WHERE event_id='" + (eventId) + "';";
-	con.query(sql, (err,result) => {
-		if(err) cb(err);
-		else{
-			let event = result[0];
-			sql = "SELECT * FROM results JOIN runners ON runners.runner_id = results.runner_id WHERE "
-			+ "event_id='" + event.event_id + "' ORDER BY result_mins ASC, result_secs ASC, result_millis ASC, seed_mins ASC, seed_secs ASC, seed_millis ASC;";
-			con.query(sql, (err,results) =>{ 
-				if(err) cb(err);
-				else if(results){
-					cb(null, {
-						event: {
-							numberOfParticipants: results.length,
-							eventName: event.event_name,
-							eventGender: event.event_gender
-						},
-						results: results
-					});
-				}
-			});
-		}
+	return new Promise( (resolve, reject) => {
+		con.query(sql, (err,result) => {
+			if(err) reject(err);
+			else{
+				let event = result[0];
+				sql = "SELECT * FROM results JOIN runners ON runners.runner_id = results.runner_id WHERE "
+				+ "event_id='" + event.event_id + "' ORDER BY result_mins ASC, result_secs ASC, result_millis ASC, seed_mins ASC, seed_secs ASC, seed_millis ASC;";
+				con.query(sql, (err,results) =>{ 
+					if(err) reject(err);
+					else if(results){
+						console.log(results);
+						resolve({
+							event: {
+								numberOfParticipants: results.length,
+								eventName: event.event_name,
+								eventGender: event.event_gender
+							},
+							results: results
+						});
+					}
+				});
+			}
+		});
 	});
+	
 }
 
 function isAcceptingEntries(meetId,cb){

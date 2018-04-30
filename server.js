@@ -297,6 +297,12 @@ app.get('/team-scores', async function(req,res){
 	try{
 		maleResults = mapToArray(await calculateTeamScores(meetId,"Male"));
 		femaleResults = mapToArray(await calculateTeamScores(meetId,"Female"));
+		maleResults.sort((result1,result2) =>{
+			return result2.score - result1.score;
+		});
+		femaleResults.sort((result1,result2) =>{
+			return result2.score - result1.score;
+		});
 	} catch(e){
 		res.writeHead(500, {"content-type":"application/json"});
 		res.end(JSON.stringify({success: false}));

@@ -33,6 +33,7 @@ $(document).ready( () => {
 	$('#result-sheet-modal').on('hidden.bs.modal', (e) => {
 		$('.event-result-div').remove();
 		$('#result-sheet-modal-header').empty();
+		$('#team-score-div').remove();
 	});
 
 	$('#score-event-modal').on('hidden.bs.modal', (e) => {
@@ -102,6 +103,29 @@ $(document).ready( () => {
 						eventDiv.append(eventTable);
 						modalBody.append(eventDiv);
 					}
+					$.ajax({
+						url: "/team-scores?meetId=" + get('meetId'),
+						method: "GET",
+						success: (result) => {
+							if(result.success === true){
+								let maleResults = result.maleResults;
+								let femaleResults = result.femaleResults;
+								const teamScoreDiv = $('<div id="team-score-div"></div>').append('<h5>Team Results</h5>');
+								const maleTable = $('<table></table>').append($('<thead><tr><th>Team Name</th><th>Score</th></tr></thead>'));
+								const maleTableBody = $('<tbody></tbody>');
+								const femaleTable = $('<table></table>').append($('<thead><tr><th>Team Name</th><th>Score</th></tr></thead>'));
+								const femaleTableBody = $('<tbody></tbody>');
+								for(let i = 0 ; i < maleResults.length ; i++)
+									maleTableBody.append($('<tr></tr>').append($('<td></td>').html(maleResults[i].teamName)).append($('<td></td>').html(maleResults[i].score)));
+								for(let i = 0 ; i < femaleResults.length ; i++)
+									femaleTableBody.append($('<tr></tr>').append($('<td></td>').html(femaleResults[i].teamName)).append($('<td></td>').html(femaleResults[i].score)));
+								maleTable.append(maleTableBody);
+								femaleTable.append(femaleTableBody);
+								teamScoreDiv.append('<h5>Male Results</h5>').append(maleTable).append('<h5>Female Results</h5>').append(femaleTable);
+								modalBody.append(teamScoreDiv);
+							}
+						}
+					});
 				}
 				modal.modal();
 			},

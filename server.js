@@ -259,7 +259,14 @@ app.get('/event-results', (req,res) =>{
 
 app.get('/meet-results', (req,res) => {
 	const meetId = req.query.meetId;
-	const sql = "SELECT event_id FROM events WHERE meet_id='" + meetId + "'";
+	const scoredOnly = req.query.scoredOnly;
+	let sql = "";
+	if(scoredOnly === "true"){
+		sql = "SELECT event_id FROM events WHERE meet_id='" + meetId + "' AND scored=true;";
+	}
+	else{
+		sql = "SELECT event_id FROM events WHERE meet_id='" + meetId + "'";
+	}
 	con.query(sql, async function(err,result){
 		if(err){
 			res.writeHead(500, {"content-type":"application/json"});
@@ -271,7 +278,6 @@ app.get('/meet-results', (req,res) => {
 				let eventId = result[i].event_id;
 				try{
 					const result = await getSortedResults(eventId);
-					console.log(result);
 					results.push(result);
 				} catch(e) {
 					res.writeHead(500, {"content-type":"application/json"});
@@ -282,6 +288,25 @@ app.get('/meet-results', (req,res) => {
 			res.end(JSON.stringify({success: true, meetResults: results}));
 		}
 	});
+});
+
+app.get('/team-scores', async function(req,res){
+	const meetId = req.query.meetId;
+	let maleResults = [];
+	let femaleResults = [];
+	try{
+		maleResults = mapToArray(await calculateTeamScores(meetId,"Male"));
+		femaleResults = mapToArray(await calculateTeamScores(meetId,"Female"));
+	} catch(e){
+		res.writeHead(500, {"content-type":"application/json"});
+		res.end(JSON.stringify({success: false}));
+	}
+	res.writeHead(200, {"content-type":"application/json"});
+	res.end(JSON.stringify({
+		success: true, 
+		maleResults: maleResults,
+		femaleResults: femaleResults
+	}));
 });
 
 app.get('/is-accepting-entries', (req,res) => {
@@ -449,8 +474,9 @@ app.post('/register-runners', (req,res) =>{
 });
 
 app.post('/score-event', (req,res) => {
-	const eventId = req.query.eventId;
-	const results = req.body.results;
+	const eventId = req.body.eventId;
+	const results = JSON.parse(req.body.results);
+	console.log("RESULTS ** : " + JSON.stringify(results));
 	results.sort( (result1, result2) => {
 		let totalTimeMills1 = result1.result_mins * 60 * 1000 + result1.result_secs * 1000 + result1.result_millis;
 		let totalTimeMills2 = result2.result_mins * 60 * 1000 + result2.result_secs * 1000 + result2.result_millis;
@@ -494,17 +520,19 @@ app.post('/score-event', (req,res) => {
 			}
 			else{
 				console.log("Updated results DB! : " + sql);
-				sql = "UPDATE events SET scored=true WHERE event_id='" + eventId + "';";
-				con.query(sql, (err,result) => {
-					if(err){
-						res.sendStatus(500);
-						throw err;
-					}
-					else{
-						console.log('Event with ID ' + eventId + ' has been scored!');
-						res.sendStatus(200);
-					}
-				});
+				if(i === results.length - 1){
+					sql = "UPDATE events SET scored=true WHERE event_id='" + eventId + "';";
+					con.query(sql, (err,result) => {
+						if(err){
+							res.sendStatus(500);
+							throw err;
+						}
+						else{
+							console.log('Event with ID ' + eventId + ' has been scored!');
+							res.sendStatus(200);
+						}
+					});
+				}
 			}
 		});
 	}
@@ -563,14 +591,45 @@ function isAcceptingEntries(meetId,cb){
 		if(err) throw(err);
 		else{
 			if(result[0].accepting_entries === 1){
-				console.log("TRUE");
 				cb(true);
 			} else{
-				console.log("FALSE");
 				cb(false);
 			}
 		} 
 	});
+}
+
+function calculateTeamScores(meetId, gender){
+	let sql = "SELECT team_name,points,event_gender FROM results JOIN events ON events.event_id=results.event_id WHERE meet_id='" + meetId + "' AND event_gender='" + gender + "';";
+	return new Promise ( (resolve, reject) => {
+		con.query(sql, (err,result) => {
+			if(err) reject(err);
+			else{
+				let teamScores = new Map();
+				for(let i = 0 ; i < result.length ; i++){
+					let teamName = result[i].team_name;
+					let points = result[i].points;
+					if(teamScores.get(teamName)){
+						teamScores.set(teamName,teamScores.get(teamName) + points);
+					} else{
+						teamScores.set(teamName,points);
+					}
+				}
+				resolve(teamScores);
+			}
+		});
+	});
+}
+
+function mapToArray(map){
+	let array = [];
+	map.forEach((value,key) => {
+		let json = {};
+		json.teamName = key;
+		json.score = value;
+		array.push(json);
+	});
+	return array;
 }
 
 function saltHashPassword ({password}){

@@ -30,9 +30,9 @@ $(document).ready( () => {
 		$('#view-entries-modal-header').empty();
 	});
 
-	$('#heat-sheet-modal').on('hidden.bs.modal', (e) => {
+	$('#result-sheet-modal').on('hidden.bs.modal', (e) => {
 		$('.event-result-div').remove();
-		$('#heat-sheet-modal-header').empty();
+		$('#result-sheet-modal-header').empty();
 	});
 
 	$('#score-event-modal').on('hidden.bs.modal', (e) => {
@@ -42,13 +42,13 @@ $(document).ready( () => {
 	});
 
 	$('#heat-sheet-button').click(() => {
-		const modal = $('#heat-sheet-modal');
+		const modal = $('#result-sheet-modal');
 		$.ajax({
 			url: "/meet-results?meetId=" + get("meetId"),
 			method: "GET",
 			success: (result) => {
-				$('#heat-sheet-modal-header').html("Heat Sheet for " + $('#meet-title-header').html());
-				const modalBody = $('#heat-sheet-modal-body');
+				$('#result-sheet-modal-header').html("Heat Sheet for " + $('#meet-title-header').html());
+				const modalBody = $('#result-sheet-modal-body');
 				if(result.success === true){
 					const meetResults = result.meetResults;
 					for(let i = 0 ; i < meetResults.length ; i++){
@@ -69,6 +69,44 @@ $(document).ready( () => {
 					}
 				}
 				modal.modal();
+			},
+			error: () => {
+				alert('There was an error getting the heat sheet. Please try again later.');
+			}
+		});
+	});
+
+	$('#results-button').click(() => {
+		const modal = $('#result-sheet-modal');
+		$.ajax({
+			url: "/meet-results?meetId=" + get("meetId") + "&scoredOnly=true",
+			method: "GET",
+			success: (result) => {
+				$('#result-sheet-modal-header').html("Results For " + $('#meet-title-header').html());
+				const modalBody = $('#result-sheet-modal-body');
+				if(result.success === true){
+					const meetResults = result.meetResults;
+					for(let i = 0 ; i < meetResults.length ; i++){
+						let eventInfo = meetResults[i].event;
+						let eventResults = meetResults[i].results;
+						const eventDiv = $('<div></div>').addClass('event-result-div');
+						const eventHeader = $('<h5></h5>').html(eventInfo.eventName + " " + eventInfo.eventGender + " (" + eventInfo.numberOfParticipants + " runners)");
+						const eventTable = $('<table></table>').append($('<thead></thead>').append($('<tr></tr>').append($('<th>Name</th><th>Grade</th><th>Team</th><th>Seed Time</th><th>Actual Time</th><th>Points</th>'))));
+						const tableBody = $('<tbody></tbody>')
+						for(let j = 0 ; j < eventResults.length ; j++){
+							let row = $('<tr><td>' + eventResults[j].runner_name + '</td><td>' + eventResults[j].runner_grade + '</td><td>' + eventResults[j].team_name + '</td><td>' + formatTime(eventResults[j].seed_mins, eventResults[j].seed_secs, eventResults[j].seed_millis) + '</td><td>' + formatTime(eventResults[j].result_mins, eventResults[j].result_secs, eventResults[j].result_millis) + '</td><td>' + eventResults[j].points + '</td></tr>');
+							tableBody.append(row);
+						}	
+						eventTable.append(tableBody);
+						eventDiv.append(eventHeader);
+						eventDiv.append(eventTable);
+						modalBody.append(eventDiv);
+					}
+				}
+				modal.modal();
+			},
+			error: () => {
+				alert('There was an error getting the results for this meet. Please try again later.');
 			}
 		});
 	});
@@ -90,16 +128,16 @@ $(document).ready( () => {
 				result_secs : result_secs[i].value || 0,
 				result_millis : result_millis[i].value || 0,
 			}
-			console.log(JSON.stringify(resultJSON));
 			results.push(resultJSON);
 		}
+		console.log("RESULTS : " + JSON.stringify(results));
 		$.ajax({
 			url: "/score-event",
 			method: "POST",
 			data: {
 				eventId: $('#event-being-scored').val(),
-				results: results
-			}
+				results: JSON.stringify(results)
+			},
 			statusCode: {
 				200: () => {
 					alert('You have successfully scored this event.');
@@ -140,14 +178,13 @@ function populateTable(){
 						$('#view-entries-modal').modal();
 					});
 				}else{
-					$("#heat-sheet-button").prop('disabled',false);
-					if(events[i].scored === true){
+					if(events[i].scored === 1){
 						oneScored = true;
 						status = $("<td>Scored</td>");
-						button = $("<button class='btn btn-primary'>Review Results</button>");
+						button = $("<button class='btn btn-primary'>Re-Score Event</button>");
 						button.click(() => {
-							/** POSSIBLY OPEN MODAL HERE **/
-							window.location = "/get-results?eventId=" + events[i].event_id;
+							openScoringModal(events[i].event_id);
+							$('#score-event-modal').modal();
 						});
 					}else{
 						status = $("<td>Not Yet Scored</td>");
@@ -158,6 +195,7 @@ function populateTable(){
 						});
 					}
 					$("#results-button").prop("disabled", !oneScored);
+					$("#heat-sheet-button").prop('disabled', oneScored);
 				}
 				row.append(status);
 				row.append(button);

@@ -65,6 +65,7 @@ $(document).ready(function(){
 				meet_id: get('meetId'),
 				entries: JSON.stringify(entryArray)
 			}
+		alert("DATA: " + JSON.stringify(data));
 		console.log(data);
 		$.ajax({
 			type: "POST",

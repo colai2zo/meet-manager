@@ -19,8 +19,10 @@
 </head>
 <body>
 	<div class="container">
-		<div class="text-center">
-			<h1>Manage Meet:</h1>
+		<div class="text-center" id="header">
+			<h1 id="meet-title-header"></h1>
+			<h3 id="meet-location-header"></h3>
+			<h3 id="meet-date-header"></h3>
 		</div>
 		<div class="form-control">
 			<div class="form-group">
@@ -53,7 +55,7 @@
 	</div>
 	<div class="modal fade" id="view-entries-modal">
 		<div class="modal-dialog" role="document">
-			<div class="modal-content">
+			<div class="modal-content" id="view-entries-modal-content">
 				<div class="modal-header">
 					<h5 class="modal-header" id="view-entries-modal-header"></h5>
 					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -72,6 +74,47 @@
 						</thead>
 					</table>
 				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="score-event-modal">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content" id="score-event-modal-content">
+				<div class="modal-header">
+					<h5 class="modal-header" id="score-event-modal-header"></h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body" id="score-event-modal-body">
+					<table>
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Grade</th>
+								<th>Team</th>
+								<th>Seed Time</th>
+								<th>Actual Time</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+				<div class="modal-footer" id="score-event-modal-footer">
+					<button class="btn btn-primary" id="submit-results-button">Submit Results For Scoring</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="heat-sheet-modal">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-header" id="heat-sheet-modal-header"></h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body" id="heat-sheet-modal-body"></div>
 			</div>
 		</div>
 	</div>

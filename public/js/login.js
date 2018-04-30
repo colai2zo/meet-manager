@@ -21,9 +21,7 @@ $(document).ready( () => {
 			statusCode: {
 				401: () => {
 					alert('Invalid login credentials. Please try again.');
-					$('#login-form').each(() =>{
-						this.reset();
-					});
+					$('#login-form').clear();
 				}
 			}
 		});

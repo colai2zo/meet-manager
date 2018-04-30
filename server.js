@@ -217,11 +217,15 @@ app.get('/get-my-meets', (req,res) => {
 
 app.get('/meet-info', (req,res) => {
 	if(req.isAuthenticated()){
-		const sql = "SELECT * FROM meets WHERE meet_id='" + req.query.meet_id + "';";
+		const sql = "SELECT * FROM meets WHERE meet_id='" + req.query.meetId + "';";
 		con.query(sql, (err,result) => {
-			if(err) throw err;
-			console.log(result);
-			res.send(JSON.stringify(result));
+			if(err){
+				console.log(err);
+				throw err;
+			}else{
+				console.log("RESULT *** : " + result);
+				res.send(JSON.stringify(result));
+			}
 		});
 	}
 	else{
@@ -255,8 +259,6 @@ app.get('/event-results', (req,res) =>{
 
 app.get('/meet-results', (req,res) => {
 	const meetId = req.query.meetId;
-	let sql = "SELECT * FROM meets"
-
 	const sql = "SELECT event_id FROM events WHERE meet_id='" + meetId + "'";
 	con.query(sql, async function(err,result){
 		if(err){
@@ -395,7 +397,7 @@ app.post('/register-runners', (req,res) =>{
 				const entries = JSON.parse(req.body.entries);
 				const team_name = req.user.team_name;
 				console.log("ENTRIES: " + entries);
-				var sql = "INSERT INTO attendance (meet_id, team_name) VALUES ('" + (meet_id) + "','" + (team_name) + "');";
+				var sql = "INSERT INTO attendance (meet_id, team_name, points) VALUES ('" + (meet_id) + "','" + (team_name) + "','0');";
 				con.query(sql, (err,result) => {
 					if(err) {
 						res.sendStatus(500);
@@ -420,7 +422,7 @@ app.post('/register-runners', (req,res) =>{
 								else{
 									runner_id = result.insertId;
 									console.log("1 runner record inserted with runner ID: " + result.insertId);
-									sql = "INSERT INTO results (event_id, runner_id, seed_mins, seed_secs, seed_millis, result_mins, result_secs, result_millis, team_name) VALUES ('" + (event_id) + "','" + (runner_id) + "','" + (seed_mins) + "','" + (seed_secs) + "','" + (seed_millis) + "','0','0','0','" + (team_name) + "');";
+									sql = "INSERT INTO results (event_id, runner_id, seed_mins, seed_secs, seed_millis, result_mins, result_secs, result_millis, team_name, points) VALUES ('" + (event_id) + "','" + (runner_id) + "','" + (seed_mins) + "','" + (seed_secs) + "','" + (seed_millis) + "','0','0','0','" + (team_name) + "','0');";
 									con.query(sql, (err,result) => {
 										if(err) {
 											res.sendStatus(500);

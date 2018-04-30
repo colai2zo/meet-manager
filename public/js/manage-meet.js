@@ -35,6 +35,12 @@ $(document).ready( () => {
 		$('#heat-sheet-modal-header').empty();
 	});
 
+	$('#score-event-modal').on('hidden.bs.modal', (e) => {
+		$('#score-event-modal tbody').remove();
+		$('#score-event-modal-header').empty();
+		$('event-being-scored').val('');
+	});
+
 	$('#heat-sheet-button').click(() => {
 		const modal = $('#heat-sheet-modal');
 		$.ajax({
@@ -71,20 +77,42 @@ $(document).ready( () => {
 		console.log('click');
 		let rows = $('#score-event-modal-body tbody tr');
 		let resultIds = $('.result_id');
-		let seed_mins = $('.seed_mins');
-		let seed_secs = $('.seed_secs');
-		let seed_millis = $('.seed_millis');
+		let result_mins = $('.result_mins');
+		let result_secs = $('.result_secs');
+		let result_millis = $('.result_millis');
 		let team_name = $('.team_name');
-;		for(let i = 0 ; i < rows.length ; i++){
+		let results = [];
+		for(let i = 0 ; i < rows.length ; i++){
 			let resultJSON = {
 				resultId : resultIds[i].value,
-				team_name: team_name[i].innerHTML;
-				result_mins : result_mins[i].value,
-				result_secs : result_secs[i].value,
-				result_millis : result_millis[i].value,
+				team_name: team_name[i].innerHTML,
+				result_mins : result_mins[i].value || 0,
+				result_secs : result_secs[i].value || 0,
+				result_millis : result_millis[i].value || 0,
 			}
 			console.log(JSON.stringify(resultJSON));
+			results.push(resultJSON);
 		}
+		$.ajax({
+			url: "/score-event",
+			method: "POST",
+			data: {
+				eventId: $('#event-being-scored').val(),
+				results: results
+			}
+			statusCode: {
+				200: () => {
+					alert('You have successfully scored this event.');
+					$('#score-event-modal').modal('hide');
+					window.location.reload(true);
+				},
+				500: () => {
+					alert('Something went wrong trying to score this event. Check to make sure all inputs are filled with numbers only, and try again.');
+					$('#score-event-modal').modal('hide');
+					window.location.reload(true);
+				}
+			}
+		});
 	});
 });
 
@@ -179,9 +207,9 @@ function openScoringModal(eventId){
 			let eventInfo = data.info.event;
 			let entries = data.info.results;
 			let modal = $('#score-event-modal');
+			$('#event-being-scored').val(eventInfo.eventId);
 			$('#score-event-modal-header').html("Enter Scores For " + eventInfo.eventName + " " + eventInfo.eventGender);
 			let tableBody = $('<tbody></tbody>');
-			//let minsInputs = [], secsInputs = [], millisInputs = [], resultIds = [];
 			for(let i = 0 ; i < entries.length ; i++) {
 				let row = $("<tr><td>" + entries[i].runner_name + "</td><td>" + entries[i].runner_grade + "</td><td class='team_name'>" + entries[i].team_name + "</td><td>" + formatTime(entries[i].seed_mins, entries[i].seed_secs, entries[i].seed_millis) + "</td></tr>");
 				let minsInput = $("<input type='number' max='30' min='0' class='result_mins' placeholder='mm'/>");
@@ -189,10 +217,6 @@ function openScoringModal(eventId){
 				let millisInput = $("<input type='number' max='999' min='0' class='result_millis' placeholder='millis'/>");
 				let resultIdInput = $("<input type='hidden' class='result_id' value='" + entries[i].result_id + "'/>");
 				row.append($('<td></td>').addClass('td-unpadded').append(minsInput)).append($('<td></td>').addClass('td-unpadded').append(secsInput)).append($('<td></td>').addClass('td-unpadded').append(millisInput)).append($('<td></td>').addClass('td-unpadded').append(resultIdInput));
-				// minsInputs.push(minsInput);
-				// secsInputs.push(secsInput);
-				// millisInputs.push(millisInput);
-				// resultIds.push(entries[i].result_id);
 				tableBody.append(row);
 			}
 			$('#score-event-modal table:first-of-type').append(tableBody);

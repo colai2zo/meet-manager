@@ -448,11 +448,76 @@ app.post('/register-runners', (req,res) =>{
 	}
 });
 
+app.post('/score-event', (req,res) => {
+	const eventId = req.query.eventId;
+	const results = req.body.results;
+	results.sort( (result1, result2) => {
+		let totalTimeMills1 = result1.result_mins * 60 * 1000 + result1.result_secs * 1000 + result1.result_millis;
+		let totalTimeMills2 = result2.result_mins * 60 * 1000 + result2.result_secs * 1000 + result2.result_millis;
+		return totalTimeMills1 - totalTimeMills2;
+	});
+	for(let i = 0 ; i < results.length ; i++){
+		let result = results[i];
+		switch(i){
+			case 0:
+				result.points = 10;
+				break;
+			case 1: 
+				result.points = 8;
+				break;
+			case 2: 
+				result.points = 6;
+				break;
+			case 3:
+				result.points = 5;
+				break;
+			case 4: 
+				result.points = 4;
+				break;
+			case 5: 
+				result.points = 3;
+				break;
+			case 6:
+				result.points = 2;
+				break;
+			case 7: 
+				result.points = 1;
+				break;
+			default:
+				result.points = 0;
+		}
+		let sql = "UPDATE results SET result_mins='" + result.result_mins + "',result_secs='" + result.result_secs + "',result_millis='" + result.result_millis + "',points='" + result.points + "' WHERE result_id='" + result.resultId + "';";
+		con.query(sql, (err,result) => {
+			if(err){
+				res.sendStatus(500);
+				throw err;
+			}
+			else{
+				console.log("Updated results DB! : " + sql);
+				sql = "UPDATE events SET scored=true WHERE event_id='" + eventId + "';";
+				con.query(sql, (err,result) => {
+					if(err){
+						res.sendStatus(500);
+						throw err;
+					}
+					else{
+						console.log('Event with ID ' + eventId + ' has been scored!');
+						res.sendStatus(200);
+					}
+				});
+			}
+		});
+	}
+});
+
 app.post('/toggle-accepting-entries', (req,res) =>{
 	console.log(req.body.acceptingEntries);
 	const sql = "UPDATE meets SET accepting_entries=" + req.body.acceptingEntries + " WHERE meet_id='" + req.body.meetId + "';";
 	con.query(sql, (err,result) =>{
-		if(err) throw err;
+		if(err){
+			res.sendStatus(500);
+			throw err;
+		}
 		else{
 			console.log('Meet ' + req.body.meetId + " acceptingEntries toggled to " + req.body.acceptingEntries);
 			res.sendStatus(200);
@@ -476,6 +541,7 @@ function getSortedResults(eventId){
 						console.log(results);
 						resolve({
 							event: {
+								eventId: eventId,
 								numberOfParticipants: results.length,
 								eventName: event.event_name,
 								eventGender: event.event_gender

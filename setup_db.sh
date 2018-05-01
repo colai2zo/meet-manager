@@ -8,6 +8,7 @@ MYSQL_PASSWORD="1234"
 
 DATABASE_NAME="meet_manager"
 USER_TABLE_NAME="user"
+ATTENDANCE_TABLE_NAME="attendance"
 EVENTS_TABLE_NAME="events"
 MEETS_TABLE_NAME="meets"
 RESULTS_TABLE_NAME="results"
@@ -21,7 +22,7 @@ RUNNERS_TABLE_NAME="runners"
   username varchar(127) COLLATE utf8mb4_unicode_ci NOT NULL,
   encrypted_password varchar(127) COLLATE utf8mb4_unicode_ci NOT NULL,
   salt char(127) COLLATE utf8mb4_unicode_ci NOT NULL,
-  token char(127),
+  team_name varchar(255) NOT NULL,
   UNIQUE (username),
   PRIMARY KEY (id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -31,6 +32,7 @@ RUNNERS_TABLE_NAME="runners"
   meet_id int(11) NOT NULL,
   event_name varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   event_gender varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  scored tinyint(1) NOT NULL,
   PRIMARY KEY (event_id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -39,7 +41,9 @@ RUNNERS_TABLE_NAME="runners"
   meet_name varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   meet_date varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   meet_location varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  meet_type varchar(255),
+  meet_type varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  team_name varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL,
+  accepting_entries tinyint(1) NOT NULL,
   PRIMARY KEY (meet_id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -51,7 +55,9 @@ RUNNERS_TABLE_NAME="runners"
   seed_millis int(11) NOT NULL,
   result_mins int(11) NOT NULL,
   result_secs int(11) NOT NULL,
-  result_millis int(11) NOT NULL
+  result_millis int(11) NOT NULL,
+  team_name varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL,
+  points int(11) NOT NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
   CREATE TABLE $RUNNERS_TABLE_NAME (
@@ -60,6 +66,12 @@ RUNNERS_TABLE_NAME="runners"
   runner_grade int(11) NOT NULL,
   team_name varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (runner_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+  CREATE TABLE $ATTENDANCE_TABLE_NAME (
+  meet_id int(11) NOT NULL AUTO_INCREMENT,
+  team_name varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  points int(11) NOT NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 END_OF_MEETMANAGER_DB_SCRIPT

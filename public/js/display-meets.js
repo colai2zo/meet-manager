@@ -10,10 +10,13 @@ function displayMeets(){
 			var meetDiv = $('#meets-div');
 			meetDiv.empty();
 			var meets = JSON.parse(result.toString());
+			if(meets.length === 0){
+				meetDiv.append($("<h4>There are no meets currently available for signup. Check again later.</h4>"))
+			}
 			for(let i = 0 ; i < meets.length ; i++){
 				let header = $("<div class='card-header'><h4 class='card-title'>" + meets[i].meet_name + "</h4></div>");
 				let body = $("<div class='card-body'><p>Host: " + meets[i].team_name + "</p><p>Date: " + meets[i].meet_date + "</p><p>Location: " + meets[i].meet_location + "</p></div>");
-				let card = $("<div class='card text-center'></div>");
+				let card = $("<div class='card text-center card-blue-border'></div>");
 				let container = $("<div class='col-md-4 col-sm-2'</div>");
 				var button = $("<a class='btn btn-primary' href='/meet-signup?meetId=" + meets[i].meet_id + "'>Sign Up</a>");
 				body.append(button);

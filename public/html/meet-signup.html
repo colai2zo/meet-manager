@@ -3,21 +3,24 @@
 <head>
 	<title>Meet Manager|Display Meets</title>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" 
-          integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+			integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+	<link rel="stylesheet" href="/css/style.css" >
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" 
             integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" 
             crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"
-			      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-			      crossorigin="anonymous"></script>
+			integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+			crossorigin="anonymous"></script>
 	<script type="text/javascript" src="/js/meet-signup.js"></script>
 	<script type="text/javascript" src="/js/app.js"></script>
 </head>
 <body>
 	<h1>Meet Signup</h1>
-	<div id="signup-form">
-		<div id="events-div" class="panel-group"></div>	
-		<a class='btn btn-primary' id="submit-entries">Submit Entries</a>	
+	<div>
+		<form id="signup-form">
+			<div id="events-div" class="panel-group"></div>	
+			<input type="submit" value="Submit Entries" class='btn btn-primary' id="submit-entries" />
+		</form>	
 	</div>
 </body>
 </html>

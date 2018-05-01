@@ -57,8 +57,10 @@ function addEventRow(){
 		const row = document.createElement('tr');
 		//Add Event and Gender Selectors to New Row
 		const eventEntry = document.createElement('td');
+		eventEntry.className = "td-unpadded";
 		const eventSelector = document.createElement('select');
 		const genderEntry = document.createElement('td');
+		genderEntry.className = "td-unpadded"
 		const genderSelector = document.createElement('select');
 		const meetType = document.querySelector('#meet-type').value.substring(0,5);
 		addChoicesTo(eventSelector,['55m','60m','100m','200m','300m','400m','500m','600m','800m','1000m','1500m','1600m','3000m']);

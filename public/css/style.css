@@ -27,7 +27,7 @@
 	top: 0;
 	right: 0;
 }
-.card{
+.card-blue-border{
 	border: solid #0D47A1 3px;
 	border-radius: 25px
 }
@@ -41,6 +41,11 @@ td{
 	padding-bottom: 20px;
 }
 th{
+	padding-left: 20px;
+	padding-right: 20px;
+	padding-bottom: 20px;
+}
+.td-padded{
 	padding-left: 20px;
 	padding-right: 20px;
 	padding-bottom: 20px;

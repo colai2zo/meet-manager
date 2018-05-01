@@ -7,22 +7,37 @@ $(document).ready(function(){
 			var events = JSON.parse(result.toString());
 			for(let i = 0 ; i < events.length ; i++){
 				let header = $("<div class='card-header'>" + events[i].event_name + " (" +  events[i].event_gender + ")</div>");
-				let button = $("<a class='btn' style='border-color: black'>+</a>");
+				let addButton = $("<a class='btn' style='border-color: black'>+</a>");
+				let subtractButton = $("<a class='btn' style='border-color: black'>–</a>");
 				let card = $("<div class='card'></div>");
 				let body = $("<div class='card-body'></div>");
-				let table = $("<table id='" + events[i].event_id + "'><tr><th>Name</th><th>Grade</th><th colspan='3'>Seed Time</th></tr></table>");
-				button.click(() => {
+				let table = $("<table id='" + events[i].event_id + "'></table>");
+				addButton.click((e) => {
+					e.preventDefault();
+					if($("#" + events[i].event_id + " tr").length === 0){
+						table.append($("<tr><th>Name</th><th>Grade</th><th colspan='3'>Seed Time</th></tr>"));
+					}
 					const row = $("<tr>"+ 
-					"<td><input type='text' class='runner_name'/></td>"+
-					"<td><input type='text' class='runner_grade'/></td>"+
-					"<td><input type='number' max='30' min='0' class='seed_minutes' placeholder='mm'/>:</td>"+
-					"<td><input type='number' max='59' min='0' class='seed_seconds' placeholder='ss'/>.</td>"+
-					"<td><input type='number' max='999' min='0' class='seed_millis' placeholder='millis'/></td>"+
+					"<td><input type='text' class='runner_name' required='required'/></td>"+
+					"<td><input type='number' max='12' min='7' class='runner_grade' required='required'/></td>"+
+					"<td class='td-unpadded'><input type='number' max='30' min='0' class='seed_minutes' placeholder='mm' required='required'/>:</td>"+
+					"<td class='td-unpadded'><input type='number' max='59' min='0' class='seed_seconds' placeholder='ss' required='required'/>.</td>"+
+					"<td class='td-unpadded'><input type='number' max='999' min='0' class='seed_millis' placeholder='millis' required='required'/></td>"+
 					"<td><input type='hidden' class='event_id' value='" + events[i].event_id + "'/></td>"+
 					"</tr>");
 					table.append(row);
 				});
-				header.append(button);
+				subtractButton.click((e) => {
+					e.preventDefault();
+					if($("#" + events[i].event_id + " tr").length >= 2){
+						$("#" + events[i].event_id + " tr")[$("#" + events[i].event_id + " tr").length - 1].remove();
+					}
+					if($("#" + events[i].event_id + " tr").length === 1){
+						$("#" + events[i].event_id + " tr")[0].remove();
+					}	
+				});
+				header.append(addButton);
+				header.append(subtractButton);
 				body.append(table);
 				card.append(header);
 				card.append(body);
@@ -35,7 +50,7 @@ $(document).ready(function(){
 		if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
 			return decodeURIComponent(name[1]);
 	}
-	$('#submit-entries').click((e) => {
+	$('#signup-form').submit((e) => {
 		e.preventDefault();
 		var entryArray = [];
 		var events = $('.event_id')
@@ -65,8 +80,6 @@ $(document).ready(function(){
 				meet_id: get('meetId'),
 				entries: JSON.stringify(entryArray)
 			}
-		alert("DATA: " + JSON.stringify(data));
-		console.log(data);
 		$.ajax({
 			type: "POST",
 			xhrFields: {withCredentials: true},

@@ -135,7 +135,7 @@ $(document).ready( () => {
 		});
 	});
 
-	$('#submit-results-button').click(() => {
+	$('#score-event-form').submit(() => {
 		console.log('click');
 		let rows = $('#score-event-modal-body tbody tr');
 		let resultIds = $('.result_id');
@@ -154,7 +154,6 @@ $(document).ready( () => {
 			}
 			results.push(resultJSON);
 		}
-		console.log("RESULTS : " + JSON.stringify(results));
 		$.ajax({
 			url: "/score-event",
 			method: "POST",
@@ -270,15 +269,18 @@ function openScoringModal(eventId){
 			let entries = data.info.results;
 			let modal = $('#score-event-modal');
 			$('#event-being-scored').val(eventInfo.eventId);
-			$('#score-event-modal-header').html("Enter Scores For " + eventInfo.eventName + " " + eventInfo.eventGender);
+			$('#score-event-modal-header').html("Enter Times For " + eventInfo.eventName + " " + eventInfo.eventGender);
 			let tableBody = $('<tbody></tbody>');
 			for(let i = 0 ; i < entries.length ; i++) {
 				let row = $("<tr><td>" + entries[i].runner_name + "</td><td>" + entries[i].runner_grade + "</td><td class='team_name'>" + entries[i].team_name + "</td><td>" + formatTime(entries[i].seed_mins, entries[i].seed_secs, entries[i].seed_millis) + "</td></tr>");
-				let minsInput = $("<input type='number' max='30' min='0' class='result_mins' placeholder='mm'/>");
-				let secsInput = $("<input type='number' max='59' min='0' class='result_secs' placeholder='ss'/>");
-				let millisInput = $("<input type='number' max='999' min='0' class='result_millis' placeholder='millis'/>");
-				let resultIdInput = $("<input type='hidden' class='result_id' value='" + entries[i].result_id + "'/>");
-				row.append($('<td></td>').addClass('td-unpadded').append(minsInput)).append($('<td></td>').addClass('td-unpadded').append(secsInput)).append($('<td></td>').addClass('td-unpadded').append(millisInput)).append($('<td></td>').addClass('td-unpadded').append(resultIdInput));
+				let minsInput = $("<td class='td-unpadded'><input type='number' required='required' max='30' min='0' class='result_mins' placeholder='mm'/>:</td>");
+				let secsInput = $("<td class='td-unpadded'><input type='number' required='required' max='59' min='0' class='result_secs' placeholder='ss'/>.</td>");
+				let millisInput = $("<td class='td-unpadded'><input type='number' required='required' max='999' min='0' class='result_millis' placeholder='millis'/></td>");
+				let resultIdInput = $("<td class='td-unpadded'><input type='hidden' class='result_id' value='" + entries[i].result_id + "'/></td>");
+				row.append(minsInput);
+				row.append(secsInput);
+				row.append(millisInput);
+				row.append(resultIdInput);
 				tableBody.append(row);
 			}
 			$('#score-event-modal table:first-of-type').append(tableBody);
@@ -297,7 +299,6 @@ function toggleAcceptingEntries(accepting){
 			acceptingEntries: accepting
 		},
 		success: () => {
-			console.log('SUCCESS');
 			populateTable();
 		}
 	});

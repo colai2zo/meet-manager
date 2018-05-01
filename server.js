@@ -37,14 +37,13 @@ const con = mysql.createConnection({
 
 con.connect((err) => {
   if (err) throw err;
-  console.log("Connected!");
+  console.log("Connected to database!");
 });
 
 /** SEESSION SETUP **/
 const sessionStore = new MySQLStore({},con);
 app.use(session({
 	genid: (req) => {
-		console.log('Inside the session middleware');
 		console.log(req.sessionID);
 		return uuid();
 	  },
@@ -172,7 +171,7 @@ app.get('/manage-meet', (req,res) => {
 
 app.get('/meet-signup', (req,res) =>{
 	if(req.isAuthenticated()){
-		isAcceptingEntries(req.query.meetId, (acceptingEntries) =>{
+		isAcceptingEntries(req.query.meetId, (acceptingEntries) => {
 			if(acceptingEntries === true){
 				res.sendFile(__dirname + "/public/html/meet-signup.html");
 			}else{
@@ -206,7 +205,6 @@ app.get('/get-my-meets', (req,res) => {
 		const sql = "SELECT * FROM meets WHERE team_name='" + req.user.team_name + "';";
 		con.query(sql, (err,result) => {
 			if(err) throw err;
-			console.log(result);
 			res.send(JSON.stringify(result));
 		});
 	}
@@ -220,10 +218,8 @@ app.get('/meet-info', (req,res) => {
 		const sql = "SELECT * FROM meets WHERE meet_id='" + req.query.meetId + "';";
 		con.query(sql, (err,result) => {
 			if(err){
-				console.log(err);
 				throw err;
 			}else{
-				console.log("RESULT *** : " + result);
 				res.send(JSON.stringify(result));
 			}
 		});
@@ -235,11 +231,9 @@ app.get('/meet-info', (req,res) => {
 
 app.get('/get-all-events-for-meet', (req,res) =>{
 	const meetId = req.query.meetId;
-	console.log(meetId);
 	const sql = "SELECT * FROM events WHERE meet_id='" + (meetId) + "';";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
-		console.log(result);
 		res.send(JSON.stringify(result));
 	});
 });
@@ -320,7 +314,6 @@ app.get('/is-accepting-entries', (req,res) => {
 	const sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId + "';";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
-		console.log(result);
 		res.send(JSON.stringify(result));
 	});
 });
@@ -345,7 +338,6 @@ app.post('/create-user', (req,res) => {
 });
 
 app.post('/login', (req, res, next) => {
-	console.log(req.sessionID);
 	passport.authenticate('local', (err, user, info) => {
 		if(info){
 			res.writeHead(401, {"content-type":"application/json"});
@@ -385,10 +377,7 @@ app.post('/create-meet', (req, res) => {
 		const location = req.body.location;
 		const type = req.body.type;
 		const events = JSON.parse(req.body.events);
-		console.log("BODY: " + JSON.stringify(req.body));
-		console.log("EVENTS: " + events);
 		const team_name = req.user.team_name;
-		console.log(team_name);
 		let sql = ("INSERT INTO meets (meet_name, meet_date, meet_location, meet_type, team_name, accepting_entries) VALUES ('" + 
 		name + "','" + date + "','" + location + "','" + type + "','" + team_name + "'," + true + ");");
 		con.query(sql, (err,result) => {
@@ -400,7 +389,6 @@ app.post('/create-meet', (req, res) => {
 			console.log("1 meet record inserted with meet ID: " + result.insertId);
 
 			for(let i = 0 ; i < events.length ; i++){
-				console.log(events[i] + "  :  " + i);
 				const eventName = events[i].event;
 				const gender = events[i].gender;
 				sql = "INSERT INTO events (meet_id, event_name, event_gender, scored) VALUES ('" + (meetId) + "','" + (eventName) + "','" + (gender) + "'," + false + ");";
@@ -427,7 +415,6 @@ app.post('/register-runners', (req,res) =>{
 			if(acceptingEntries === true){
 				const entries = JSON.parse(req.body.entries);
 				const team_name = req.user.team_name;
-				console.log("ENTRIES: " + entries);
 				var sql = "INSERT INTO attendance (meet_id, team_name, points) VALUES ('" + (meet_id) + "','" + (team_name) + "','0');";
 				con.query(sql, (err,result) => {
 					if(err) {
@@ -482,7 +469,6 @@ app.post('/register-runners', (req,res) =>{
 app.post('/score-event', (req,res) => {
 	const eventId = req.body.eventId;
 	const results = JSON.parse(req.body.results);
-	console.log("RESULTS ** : " + JSON.stringify(results));
 	results.sort( (result1, result2) => {
 		let totalTimeMills1 = result1.result_mins * 60 * 1000 + result1.result_secs * 1000 + result1.result_millis;
 		let totalTimeMills2 = result2.result_mins * 60 * 1000 + result2.result_secs * 1000 + result2.result_millis;
@@ -525,7 +511,6 @@ app.post('/score-event', (req,res) => {
 				throw err;
 			}
 			else{
-				console.log("Updated results DB! : " + sql);
 				if(i === results.length - 1){
 					sql = "UPDATE events SET scored=true WHERE event_id='" + eventId + "';";
 					con.query(sql, (err,result) => {
@@ -545,7 +530,6 @@ app.post('/score-event', (req,res) => {
 });
 
 app.post('/toggle-accepting-entries', (req,res) =>{
-	console.log(req.body.acceptingEntries);
 	const sql = "UPDATE meets SET accepting_entries=" + req.body.acceptingEntries + " WHERE meet_id='" + req.body.meetId + "';";
 	con.query(sql, (err,result) =>{
 		if(err){
@@ -572,7 +556,6 @@ function getSortedResults(eventId){
 				con.query(sql, (err,results) =>{ 
 					if(err) reject(err);
 					else if(results){
-						console.log(results);
 						resolve({
 							event: {
 								eventId: eventId,

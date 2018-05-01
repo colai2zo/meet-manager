@@ -240,7 +240,6 @@ app.get('/get-all-events-for-meet', (req,res) =>{
 
 app.get('/event-results', (req,res) =>{
 	const eventId = req.query.eventId;
-	console.log(eventId);
 	getSortedResults(eventId).then((result) => {
 		res.writeHead(200, {"content-type":"application/json"});
 		res.end(JSON.stringify({success: true, info: result}));

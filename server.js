@@ -93,7 +93,7 @@ passport.serializeUser((user, done) => {
 
 // Tell passport how to deserialize the user
 passport.deserializeUser((id, done) => {
-	const sql = "SELECT username, team_name FROM user WHERE id='" + (id) + "';";
+	const sql = "SELECT username, team_name FROM user WHERE id=" + mysql.escape(id) + ";";
 	con.query(sql, (err,result) =>{
 		if(err){
 			done(err, false);
@@ -154,7 +154,7 @@ app.get('/main-menu', (req,res) => {
 
 app.get('/manage-meet', (req,res) => {
 	if(req.isAuthenticated()){
-		const sql = "SELECT meet_id FROM meets WHERE meet_id='" + req.query.meetId + "' AND team_name='" + req.user.team_name + "';";
+		const sql = "SELECT meet_id FROM meets WHERE meet_id=" + mysql.escape(req.query.meetId) + " AND team_name=" + mysql.escape(req.user.team_name) + ";";
 		con.query(sql, (err,result) => {
 			if(err) throw err;
 			else if(result[0]){
@@ -202,7 +202,7 @@ app.get('/meets-accepting-entries', (req,res) => {
 
 app.get('/get-my-meets', (req,res) => {
 	if(req.isAuthenticated() && req.user){
-		const sql = "SELECT * FROM meets WHERE team_name='" + req.user.team_name + "';";
+		const sql = "SELECT * FROM meets WHERE team_name=" + mysql.escape(req.user.team_name) + ";";
 		con.query(sql, (err,result) => {
 			if(err) throw err;
 			res.send(JSON.stringify(result));
@@ -215,7 +215,7 @@ app.get('/get-my-meets', (req,res) => {
 
 app.get('/meet-info', (req,res) => {
 	if(req.isAuthenticated()){
-		const sql = "SELECT * FROM meets WHERE meet_id='" + req.query.meetId + "';";
+		const sql = "SELECT * FROM meets WHERE meet_id=" + mysql.escape(req.query.meetId) + ";";
 		con.query(sql, (err,result) => {
 			if(err){
 				throw err;
@@ -231,7 +231,7 @@ app.get('/meet-info', (req,res) => {
 
 app.get('/get-all-events-for-meet', (req,res) =>{
 	const meetId = req.query.meetId;
-	const sql = "SELECT * FROM events WHERE meet_id='" + (meetId) + "';";
+	const sql = "SELECT * FROM events WHERE meet_id=" + mysql.escape(meetId) + ";";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
 		res.send(JSON.stringify(result));
@@ -255,10 +255,10 @@ app.get('/meet-results', (req,res) => {
 	const scoredOnly = req.query.scoredOnly;
 	let sql = "";
 	if(scoredOnly === "true"){
-		sql = "SELECT event_id FROM events WHERE meet_id='" + meetId + "' AND scored=true;";
+		sql = "SELECT event_id FROM events WHERE meet_id=" + mysql.escape(meetId) + " AND scored=true;";
 	}
 	else{
-		sql = "SELECT event_id FROM events WHERE meet_id='" + meetId + "'";
+		sql = "SELECT event_id FROM events WHERE meet_id=" + mysql.escape(meetId);
 	}
 	con.query(sql, async function(err,result){
 		if(err){
@@ -310,7 +310,7 @@ app.get('/team-scores', async function(req,res){
 
 app.get('/is-accepting-entries', (req,res) => {
 	const meetId = req.query.meetId;
-	const sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId + "';";
+	const sql = "SELECT accepting_entries FROM meets WHERE meet_id=" + mysql.escape(meetId) + ";";
 	con.query(sql, (err,result) => {
 		if(err) throw err;
 		res.send(JSON.stringify(result));
@@ -322,7 +322,7 @@ app.post('/create-user', (req,res) => {
 	const password = req.body.password;
 	const teamName = req.body.teamName;
 	const { salt, hash } = saltHashPassword({ password });
-    const sql = "INSERT INTO user (username, team_name, encrypted_password, salt) VALUES ('" + (username) + "','" + (teamName) + "','" + (hash) + "','" + (salt) + "')";
+    const sql = "INSERT INTO user (username, team_name, encrypted_password, salt) VALUES (" + mysql.escape(username) + "," + mysql.escape(teamName) + "," + mysql.escape(hash) + "," + mysql.escape(salt) + ")";
     con.query(sql, (err,result) => {
     	if(err) {
     		res.writeHead(400, {"content-type":"application/json"});
@@ -377,8 +377,8 @@ app.post('/create-meet', (req, res) => {
 		const type = req.body.type;
 		const events = JSON.parse(req.body.events);
 		const team_name = req.user.team_name;
-		let sql = ("INSERT INTO meets (meet_name, meet_date, meet_location, meet_type, team_name, accepting_entries) VALUES ('" + 
-		name + "','" + date + "','" + location + "','" + type + "','" + team_name + "'," + true + ");");
+		let sql = ("INSERT INTO meets (meet_name, meet_date, meet_location, meet_type, team_name, accepting_entries) VALUES (" + 
+		mysql.escape(name) + "," + mysql.escape(date) + "," + mysql.escape(location) + "," + mysql.escape(type) + "," + mysql.escape(team_name) + "," + true + ");");
 		con.query(sql, (err,result) => {
 			if(err) {
 				res.sendStatus(500);	
@@ -390,7 +390,7 @@ app.post('/create-meet', (req, res) => {
 			for(let i = 0 ; i < events.length ; i++){
 				const eventName = events[i].event;
 				const gender = events[i].gender;
-				sql = "INSERT INTO events (meet_id, event_name, event_gender, scored) VALUES ('" + (meetId) + "','" + (eventName) + "','" + (gender) + "'," + false + ");";
+				sql = "INSERT INTO events (meet_id, event_name, event_gender, scored) VALUES (" + mysql.escape(meetId) + "," + mysql.escape(eventName) + "," + mysql.escape(gender) + "," + false + ");";
 				con.query(sql, (err,result) => {
 					if(err) {
 						res.sendStatus(500);	
@@ -414,7 +414,7 @@ app.post('/register-runners', (req,res) =>{
 			if(acceptingEntries === true){
 				const entries = JSON.parse(req.body.entries);
 				const team_name = req.user.team_name;
-				var sql = "INSERT INTO attendance (meet_id, team_name, points) VALUES ('" + (meet_id) + "','" + (team_name) + "','0');";
+				var sql = "INSERT INTO attendance (meet_id, team_name, points) VALUES (" + mysql.escape(meet_id) + "," + mysql.escape(team_name) + ",'0');";
 				con.query(sql, (err,result) => {
 					if(err) {
 						res.sendStatus(500);
@@ -430,7 +430,7 @@ app.post('/register-runners', (req,res) =>{
 							let seed_millis = entries[i].seed_millis;
 							let runner_id = "";
 							console.log("1 Attendence entry updated with ID: " + result.insertId);
-							sql = "INSERT INTO runners (runner_name, runner_grade, team_name) VALUES ('" + runner_name + "','" + runner_grade + "','" + team_name + "');";
+							sql = "INSERT INTO runners (runner_name, runner_grade, team_name) VALUES (" + mysql.escape(runner_name) + "," + mysql.escape(runner_grade) + "," + mysql.escape(team_name) + ");";
 							con.query(sql, (err,result) => {
 								if(err) {
 									res.sendStatus(500);
@@ -439,7 +439,7 @@ app.post('/register-runners', (req,res) =>{
 								else{
 									runner_id = result.insertId;
 									console.log("1 runner record inserted with runner ID: " + result.insertId);
-									sql = "INSERT INTO results (event_id, runner_id, seed_mins, seed_secs, seed_millis, result_mins, result_secs, result_millis, team_name, points) VALUES ('" + (event_id) + "','" + (runner_id) + "','" + (seed_mins) + "','" + (seed_secs) + "','" + (seed_millis) + "','0','0','0','" + (team_name) + "','0');";
+									sql = "INSERT INTO results (event_id, runner_id, seed_mins, seed_secs, seed_millis, result_mins, result_secs, result_millis, team_name, points) VALUES ('" + (event_id) + "," + (runner_id) + "," + (seed_mins) + "," + (seed_secs) + "," + (seed_millis) + "','0','0','0','" + (team_name) + "','0');";
 									con.query(sql, (err,result) => {
 										if(err) {
 											res.sendStatus(500);
@@ -470,7 +470,9 @@ app.post('/score-event', (req,res) => {
 	const results = JSON.parse(req.body.results);
 	results.sort( (result1, result2) => {
 		let totalTimeMills1 = result1.result_mins * 60 * 1000 + result1.result_secs * 1000 + result1.result_millis;
+		//console.log("RESULT 1: " + JSON.stringify(result1) + "   TOTAL TIME: " + totalTimeMills1);
 		let totalTimeMills2 = result2.result_mins * 60 * 1000 + result2.result_secs * 1000 + result2.result_millis;
+		//console.log("RESULT 2: " + JSON.stringify(result1) + "   TOTAL TIME: " + totalTimeMills1);
 		return totalTimeMills1 - totalTimeMills2;
 	});
 	for(let i = 0 ; i < results.length ; i++){

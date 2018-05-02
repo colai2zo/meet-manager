@@ -110,7 +110,7 @@ $(document).ready( () => {
 							if(result.success === true){
 								let maleResults = result.maleResults;
 								let femaleResults = result.femaleResults;
-								const teamScoreDiv = $('<div id="team-score-div"></div>').append('<h5>Team Results</h5>');
+								const teamScoreDiv = $('<div id="team-score-div"></div>').append('<h4>Team Results</h4>');
 								const maleTable = $('<table></table>').append($('<thead><tr><th>Team Name</th><th>Score</th></tr></thead>'));
 								const maleTableBody = $('<tbody></tbody>');
 								const femaleTable = $('<table></table>').append($('<thead><tr><th>Team Name</th><th>Score</th></tr></thead>'));

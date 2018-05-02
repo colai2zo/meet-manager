@@ -439,7 +439,7 @@ app.post('/register-runners', (req,res) =>{
 								else{
 									runner_id = result.insertId;
 									console.log("1 runner record inserted with runner ID: " + result.insertId);
-									sql = "INSERT INTO results (event_id, runner_id, seed_mins, seed_secs, seed_millis, result_mins, result_secs, result_millis, team_name, points) VALUES ('" + (event_id) + "," + (runner_id) + "," + (seed_mins) + "," + (seed_secs) + "," + (seed_millis) + "','0','0','0','" + (team_name) + "','0');";
+									sql = "INSERT INTO results (event_id, runner_id, seed_mins, seed_secs, seed_millis, result_mins, result_secs, result_millis, team_name, points) VALUES (" + mysql.escape(event_id) + "," + mysql.escape(runner_id) + "," + mysql.escape(seed_mins) + "," + mysql.escape(seed_secs) + "," + mysql.escape(seed_millis) + ",'0','0','0'," + mysql.escape(team_name) + ",'0');";
 									con.query(sql, (err,result) => {
 										if(err) {
 											res.sendStatus(500);
@@ -505,7 +505,7 @@ app.post('/score-event', (req,res) => {
 			default:
 				result.points = 0;
 		}
-		let sql = "UPDATE results SET result_mins='" + result.result_mins + "',result_secs='" + result.result_secs + "',result_millis='" + result.result_millis + "',points='" + result.points + "' WHERE result_id='" + result.resultId + "';";
+		let sql = "UPDATE results SET result_mins=" + mysql.escape(result.result_mins) + ",result_secs=" + mysql.escape(result.result_secs) + ",result_millis=" + mysql.escape(result.result_millis) + ",points=" + mysql.escape(result.points) + " WHERE result_id=" + mysql.escape(result.resultId) + ";";
 		con.query(sql, (err,result) => {
 			if(err){
 				res.sendStatus(500);
@@ -513,7 +513,7 @@ app.post('/score-event', (req,res) => {
 			}
 			else{
 				if(i === results.length - 1){
-					sql = "UPDATE events SET scored=true WHERE event_id='" + eventId + "';";
+					sql = "UPDATE events SET scored=true WHERE event_id=" + mysql.escape(eventId) + ";";
 					con.query(sql, (err,result) => {
 						if(err){
 							res.sendStatus(500);
@@ -531,7 +531,7 @@ app.post('/score-event', (req,res) => {
 });
 
 app.post('/toggle-accepting-entries', (req,res) =>{
-	const sql = "UPDATE meets SET accepting_entries=" + req.body.acceptingEntries + " WHERE meet_id='" + req.body.meetId + "';";
+	const sql = "UPDATE meets SET accepting_entries=" + req.body.acceptingEntries + " WHERE meet_id=" + mysql.escape(req.body.meetId) + ";";
 	con.query(sql, (err,result) =>{
 		if(err){
 			res.sendStatus(500);
@@ -546,14 +546,14 @@ app.post('/toggle-accepting-entries', (req,res) =>{
 
 /** HELPER FUNCTIONS **/
 function getSortedResults(eventId){
-	let sql = "SELECT event_id, event_name, event_gender FROM events WHERE event_id='" + (eventId) + "';";
+	let sql = "SELECT event_id, event_name, event_gender FROM events WHERE event_id=" + mysql.escape(eventId) + ";";
 	return new Promise( (resolve, reject) => {
 		con.query(sql, (err,result) => {
 			if(err) reject(err);
 			else{
 				let event = result[0];
 				sql = "SELECT * FROM results JOIN runners ON runners.runner_id = results.runner_id WHERE "
-				+ "event_id='" + event.event_id + "' ORDER BY result_mins ASC, result_secs ASC, result_millis ASC, seed_mins ASC, seed_secs ASC, seed_millis ASC;";
+				+ "event_id=" + mysql.escape(event.event_id) + " ORDER BY result_mins ASC, result_secs ASC, result_millis ASC, seed_mins ASC, seed_secs ASC, seed_millis ASC;";
 				con.query(sql, (err,results) =>{ 
 					if(err) reject(err);
 					else if(results){
@@ -575,7 +575,7 @@ function getSortedResults(eventId){
 }
 
 function isAcceptingEntries(meetId,cb){
-	let sql = "SELECT accepting_entries FROM meets WHERE meet_id='" + meetId + "';";
+	let sql = "SELECT accepting_entries FROM meets WHERE meet_id=" + mysql.escape(meetId) + ";";
 	var accepting = false
 	con.query(sql, (err,result) =>{
 		if(err) throw(err);
@@ -590,7 +590,7 @@ function isAcceptingEntries(meetId,cb){
 }
 
 function calculateTeamScores(meetId, gender){
-	let sql = "SELECT team_name,points,event_gender FROM results JOIN events ON events.event_id=results.event_id WHERE meet_id='" + meetId + "' AND event_gender='" + gender + "';";
+	let sql = "SELECT team_name,points,event_gender FROM results JOIN events ON events.event_id=results.event_id WHERE meet_id=" + mysql.escape(meetId) + " AND event_gender=" + mysql.escape(gender) + ";";
 	return new Promise ( (resolve, reject) => {
 		con.query(sql, (err,result) => {
 			if(err) reject(err);
